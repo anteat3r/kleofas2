@@ -1,0 +1,58 @@
+name: kleofas2
+description: Ultimátní client pro školu
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=2.18.2 <3.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.2
+  http: ^0.13.5
+  hive: ^2.2.3
+  loading_animation_widget: ^1.2.0+4
+  hive_flutter: ^1.1.0
+  result_type: ^0.2.0
+  intl: ^0.17.0
+  xml2json: ^5.3.6
+  pocketbase: ^0.7.3
+  json2yaml: ^3.0.1
+  html_unescape: ^2.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+  flutter_launcher_icons: "^0.12.0"
+
+flutter_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icon.jpg"
+  min_sdk_android: 21
+  web:
+    generate: true
+    image_path: "assets/icon.jpg"
+  windows:
+    generate: true
+    image_path: "assets/icon.jpg"
+    icon_size: 48
+  macos:
+    generate: true
+    image_path: "assets/icon.jpg"
+
+flutter:
+  uses-material-design: true
+  # fonts:
+  #   - family: Discord
+  #     fonts:
+  #       - asset: assets/ggsans-Normal.ttf
+  #       - asset: assets/ggsans-Bold.ttf
+  #         weight: 500
+  #       - asset: assets/ggsans-NormalItalic.ttf
+  #         style: italic
+  #       - asset: assets/ggsans-BoldItalic.ttf
+  #         weight: 500
+  #         style: italic
