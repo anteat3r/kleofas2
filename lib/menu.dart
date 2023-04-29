@@ -1,11 +1,10 @@
 import 'dart:convert';
-import 'dart:io';
+import 'bakalari.dart';
 
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'storage.dart';
 import 'day.dart';
-import 'package:http/http.dart';
 
 class MenuPage extends StatefulWidget{
   const MenuPage({Key? key}) : super(key: key);
@@ -18,14 +17,7 @@ class _MenuPageState extends State<MenuPage> {
   Box<Map> storage = Hive.box<Map>('storage');
   Box<int> refresh = Hive.box<int>('refresh');
   Box<String> user = Hive.box<String>('user');
-  Map choices = {};
-  Map localChoices = {};
-
-  @override
-  void initState () {
-    super.initState();
-    choices = storage.get('menu:choices') ?? {};
-  }
+  String cookie = '';
 
   @override
   Widget build (BuildContext context) {
@@ -35,17 +27,16 @@ class _MenuPageState extends State<MenuPage> {
       actions: [
         IconButton(
           onPressed: () {
-            String zarizeni = user.get('zarizeni') ?? '';
-            String username = user.get('stravausername') ?? '';
-            String password = user.get('stravapassword') ?? '';
-            if (zarizeni.isEmpty || username.isEmpty || password.isEmpty) return;
             loadingDialog(context, () async {
-              Response resp = await post(Uri.parse('http://pb.kleofas.pro:8000'), body: jsonEncode({'jidelna': zarizeni, 'uzivatel': username, 'heslo': password, 'data': localChoices}));
-              choices = jsonDecode(resp.body);
-              await storage.put('menu:choices', choices);
+              String zarizeni = user.get('zarizeni') ?? '';
+              String username = user.get('stravausername') ?? '';
+              String password = user.get('stravapassword') ?? '';
+              if (zarizeni.isEmpty || username.isEmpty || password.isEmpty) return;
+              cookie = await stravaLoginCookie(zarizeni, username, password);
+              Map menu = await loadStravaMenu(cookie);
+              await storage.put('menu', menu);
               setState(() {});
             });
-            loadMenu(context);
           },
           icon: const Icon(Icons.send_rounded)
         ),
@@ -63,11 +54,13 @@ class _MenuPageState extends State<MenuPage> {
             ValueListenableBuilder(
               valueListenable: storage.listenable(),
               builder: (BuildContext context, Box<Map> value, child) {
-                List menu = value.get('menu')?['jidelnicky']?['den'] ?? [];
+                Map menu = value.get('menu') ?? {};
+                // print(menu);
                 return Column(
-                  children: List.generate(menu.length, (index) {
-                    Map day = menu[index];
-                    String dayRev = day['_datum'].split('-').reversed.join('-');
+                  children: menu.keys.toList().sublist(0, menu.keys.length-1).map((key) {
+                    List day = menu[key];
+                    print(day);
+                    // String dayRev = day['_datum'].split('-').reversed.join('-');
                     double width = MediaQuery.of(context).size.width;
                     return Padding(
                       padding: const EdgeInsets.all(8.0),
@@ -84,57 +77,79 @@ class _MenuPageState extends State<MenuPage> {
                             children: <Widget>[
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 5.0),
-                                child: DayWidget(DateTime.parse(dayRev)),
+                                child: DayWidget(DateTime.parse(key)),
                               ),
-                              Text(day['jidlo'][0]['_nazev'],),
+                              Text(day[0][2]),
                               const Divider(),
                               Row(
                                 children: [
-                                  if (!day['jidlo'][1]['_nazev'].contains('nevaří')) Padding(
+                                  if (day[3]) Padding(
                                     padding: const EdgeInsets.only(right: 8.0),
                                     child: Checkbox(
-                                      value: (choices[dayRev] ?? 0) == 1,
+                                      value: day[1][0],
                                       onChanged: (bool? newvalue) {
                                         if (newvalue == null) return;
                                         setState(() {
-                                          if (choices[dayRev] == 1) {
-                                            choices[dayRev] = 0;
-                                            localChoices[dayRev] = 0;
+                                          if (day[1][0]) {
+                                            loadingDialog(context, () async {
+                                              await setLunch(cookie, day[1][1], 0);
+                                              await submitLunches(cookie);
+                                              setState(() {
+                                                day[1][0] = false;
+                                              });
+                                            });
                                           } else {
-                                            choices[dayRev] = 1;
-                                            localChoices[dayRev] = 1;
+                                            loadingDialog(context, () async {
+                                              await setLunch(cookie, day[1][1], 1);
+                                              await submitLunches(cookie);
+                                              setState(() {
+                                                day[1][0] = true;
+                                                day[2][0] = false;
+                                              });
+                                            });
                                           }
                                         });
                                       },
                                       activeColor: Colors.blue,
                                     ),
                                   ),
-                                  SizedBox(width: width - 88, child: Text(day['jidlo'][1]['_nazev'],)),
+                                  SizedBox(width: width - 88, child: Text(day[1][2])),
                                 ],
                               ),
                               const Divider(),
-                              if (day['jidlo'][2]['_nazev'].isNotEmpty) Row(
+                              if (day[2][2].isNotEmpty) Row(
                                 children: [
-                                  if (!day['jidlo'][2]['_nazev'].contains('nevaří')) Padding(
+                                  if (day[3]) Padding(
                                     padding: const EdgeInsets.only(right: 8.0),
                                     child: Checkbox(
-                                      value: (choices[dayRev] ?? 0) == 2,
+                                      value: day[2][0],
                                       onChanged: (bool? newvalue) {
                                         if (newvalue == null) return;
                                         setState(() {
-                                          if (choices[dayRev] == 2) {
-                                            choices[dayRev] = 0;
-                                            localChoices[dayRev] = 0;
+                                          if (day[2][0]) {
+                                            loadingDialog(context, () async {
+                                              await setLunch(cookie, day[2][1], 0);
+                                              await submitLunches(cookie);
+                                              setState(() {
+                                                day[2][0] = false;
+                                              });
+                                            });
                                           } else {
-                                            choices[dayRev] = 2;
-                                            localChoices[dayRev] = 2;
+                                            loadingDialog(context, () async {
+                                              await setLunch(cookie, day[2][2], 1);
+                                              await submitLunches(cookie);
+                                              setState(() {
+                                                day[2][0] = true;
+                                                day[1][0] = false;
+                                              });
+                                            });
                                           }
                                         });
                                       },
                                       activeColor: Colors.blue,
                                     ),
                                   ),
-                                  SizedBox(width: width - 88, child: Text(day['jidlo'][2]['_nazev'],)),
+                                  SizedBox(width: width - 88, child: Text(day[2][2])),
                                 ],
                               ),
                             ],
@@ -142,7 +157,7 @@ class _MenuPageState extends State<MenuPage> {
                         )
                       ),
                     );
-                  })
+                  }).toList()
                 );
               }
             )

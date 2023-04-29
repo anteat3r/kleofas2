@@ -20,18 +20,20 @@ void loadingDialog (BuildContext context, Function func) async {
       child: LoadingAnimationWidget.newtonCradle(color: Colors.yellow, size: 50),
     );
   });
-  try {
-    await func();
-    navigator.pop();
-  } catch (e) {
-    navigator.pop();
-    showDialog(context: context, builder: (BuildContext context) {
-      return AlertDialog(
-        title: const Text('Error'),
-        content: Text(e.toString()),
-      );
-    });
-  }
+  await func();
+  navigator.pop();
+  // try {
+  //   await func();
+  //   navigator.pop();
+  // } catch (e) {
+  //   navigator.pop();
+  //   showDialog(context: context, builder: (BuildContext context) {
+  //     return AlertDialog(
+  //       title: const Text('Error'),
+  //       content: Text(e.toString()),
+  //     );
+  //   });
+  // }
 }
 
 void loginUser (BuildContext context) async {
