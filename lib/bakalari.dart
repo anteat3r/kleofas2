@@ -1,12 +1,8 @@
 import 'dart:convert';
-import 'dart:io';
-import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:result_type/result_type.dart';
-import 'package:intl/intl.dart';
 import 'package:html_unescape/html_unescape.dart';
 import 'dart:math';
-import 'package:flutter/services.dart';
 
 Future<Result<String, String>> login (String url, String username, String password) async {
   if (url.isEmpty) {
@@ -116,8 +112,9 @@ Future<String> stravaLoginCookie (String zarizeni, String uzivatel, String heslo
     'origin': 'https://strava.cz',
     "Referrer-Policy": "strict-origin-when-cross-origin"
   }, body: payload);
-  String loginUrl = resp2.headers['location'] ?? 'idk';
-  Request req = Request('GET', Uri.parse(loginUrl));
+  String? loginUrl = resp2.headers['location'];
+  assert(loginUrl != null);
+  Request req = Request('GET', Uri.parse(loginUrl ?? 'bruh'));
   req.headers.clear();
   req.headers.addAll({
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
@@ -132,7 +129,7 @@ Future<String> stravaLoginCookie (String zarizeni, String uzivatel, String heslo
     "sec-fetch-user": "?1",
     "sec-gpc": "1",
     "upgrade-insecure-requests": "1",
-    "Referer": loginUrl,
+    "Referer": loginUrl ?? 'bruh',
     'origin': 'https://strava.cz/strava/Stravnik/Prihlaseni',
     'cookie': 'zobrazeni=klasicke; ObecneUpozorneni_$zarizeni.$uzivatel=kontrola; uzivatele=%5B%7B%22nazev%22%3A%22U%C5%BEivatel%201%22%2C%22jidelna%22%3A%22%22%2C%22jmeno%22%3A%22%22%7D%5D; tip=22; $sessionId'
   });
@@ -148,43 +145,91 @@ Future<Map> loadStravaMenu (String cookie) async {
     'cookie': cookie,
   });
   var unescape = HtmlUnescape();
-  await Clipboard.setData(ClipboardData(text: RegExp(r'''<input type="hidden" name="datum" value="(\d\d\d\d-\d\d-\d\d)" \/>(?:\s|.)*?<div class="jidlo( objednane)?"?(?:\s|.)*?<input type="hidden" name="veta" value="(.*)"(?:\s|.)*?<div class="nazev sloupec (?:.*)\s*">(?<!Oběd )(.*)<\/div>''')
-    .allMatches(resp4.body).map((e) => e.groups(List.generate(e.groupCount-1, (i) => i+1))).toString()));
-  List rawList = RegExp(r'''<input type="hidden" name="datum" value="(\d\d\d\d-\d\d-\d\d)" \/>(?:\s|.)*?<div class="(.*?) sloupec\s*">(?:\s|.)*?(?:<div class="jidlo informacni-druh)?(?:\s|.)*?(?:<input type="hidden" name="veta" value=")?(.*)(?:\s|.)*?(?:<div class="nazev sloupec )?(?:.*)\s*(?:">)?(?<!Oběd )(.*)(?:<\/div>)?(?:\s|.)*?<div class="jidlo( objednane)?"?(?:\s|.)*?<input type="hidden" name="veta" value="(.*)"(?:\s|.)*?<div class="nazev sloupec (?:.*)\s*">(?<!Oběd )(.*)<\/div>(?:\s|.)*?<div class="jidlo( objednane)?"?(?:\s|.)*?<input type="hidden" name="veta" value="(.*)"(?:\s|.)*?<div class="nazev sloupec (?:.*)\s*">(?<!Oběd )(.*)<\/div>''')
-    .allMatches(resp4.body).map((e) => [
-      e.group(1) ?? '',
-      e.group(2) == 'objednavani',
-      e.group(3) != null,
-      int.parse(e.group(4) ?? '69'),
-      unescape.convert(e.group(5) ?? 'idk'),
-      e.group(6) != null,
-      int.parse(e.group(7) ?? '69'),
-      unescape.convert(e.group(8) ?? 'idk'),
-      e.group(9) != null,
-      int.parse(e.group(10) ?? '69'),
-      unescape.convert(e.group(11) ?? 'idk'),
-
-      
-      // e.group(2) == null ? false : true,
-      // e.group(1) ?? '',
-      // int.parse(e.group(3) ?? 'bruh'),
-      // unescape.convert(e.group(4) ?? 'idk')
-    ]).toList();
   String konto = RegExp(r'<span class="konto-hodnota">(\d+),00 Kč</span>').firstMatch(resp4.body)?.group(1) ?? 'idk';
-  return {for (var e in rawList) e[0]: [e.sublist(2, 5), e.sublist(5, 8), e.sublist(8, 11), e[1]]}..addAll({'konto': konto});
-  // return {for (var e in Set.from(rawList.map((e) => e[1]))) e: rawList.where((element) => element[1] == e).toList()}..addAll({'konto': konto});
-
+  List<String> objednavky = resp4.body.split('<div class="objednavka">').sublist(1);
+  return { for (var element in objednavky.map((e) {
+    if (e.contains('informacni-druh')) {
+      String? date = RegExp(r'''<input type="hidden" name="datum" value="(\d\d\d\d-\d\d-\d\d)" \/>''').firstMatch(e)!.group(1);
+      assert(date != null);
+      bool enabled = RegExp(r'''<div class="datum sloupec .+?">.*?</div>''').hasMatch(e);
+      List<int> vetas = RegExp(r'''<input type="hidden" name="veta" value="(.*)" \/>''').allMatches(e).map((e2) => int.parse(e2.group(1) ?? 'bruh')).toList();
+      List<String> titles = RegExp(r'''<div class="nazev sloupec nevybratelne\s*">(.+?)</div>''').allMatches(e).map((e2) => e2.group(1) ?? '').toList();
+      List<bool> checks = RegExp(r'''<input type="hidden" value="(.+?)" autocomplete="off" \/>''').allMatches(e).map((e2) => e2.group(1) == 'zaskrtnuto').toList();
+      return {
+        'date': date,
+        'checks': checks,
+        'enabled': enabled,
+        'soup': unescape.convert(titles.first),
+        'first': {
+          'ordered': checks[enabled ? 2 : 1],
+          'veta': vetas[1],
+          'title': unescape.convert(titles[1]),
+        },
+        'second': {
+          'ordered': checks[enabled ? 3 : 2],
+          'veta': vetas[2],
+          'title': unescape.convert(titles[2]),
+        },
+      };
+    } else {
+      String? date = RegExp(r'''<input type="hidden" name="datum" value="(\d\d\d\d-\d\d-\d\d)" \/>''').firstMatch(e)!.group(1);
+      assert(date != null);
+      String title = RegExp(r'''<div class="nazev sloupec nevybratelne\s*">(.+?)</div>''').firstMatch(e)!.group(1) ?? 'idk';
+      return {
+        'date': date,
+        'enabled': false,
+        'soup': unescape.convert(title),
+        'first': {
+          'ordered': false,
+          'veta': 69,
+          'title': unescape.convert(title),
+        },
+        'second': {
+          'ordered': false,
+          'veta': 69,
+          'title': unescape.convert(title),
+        },
+      };
+    }
+  })) element['date'] : element..removeWhere((key, value) => key == 'date')}..addAll({'konto': konto});
 }
+
 Future<void> setLunch (String cookie, int veta, int amount) async {
   Response resp = await post(Uri.parse('https://www.strava.cz/Strava5/Objednavky/Prihlas'), headers: {
-    'cookie': cookie
+    'cookie': cookie,
+    "accept": "text/html, */*; q=0.01",
+    "accept-language": "en-US,en;q=0.5",
+    "content-type": "application/json",
+    "sec-ch-ua": "\"Chromium\";v=\"112\", \"Brave\";v=\"112\", \"Not:A-Brand\";v=\"99\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "\"Windows\"",
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-origin",
+    "sec-gpc": "1",
+    "x-requested-with": "XMLHttpRequest",
+    "Referer": "https://www.strava.cz/Strava5/Objednavky",
+    "Referrer-Policy": "strict-origin-when-cross-origin"
   }, body: '{"veta":$veta,"pocet":$amount}');
-  print(resp.body);
   assert(resp.statusCode == 200);
 }
+
 Future<void> submitLunches (String cookie) async {
   Response resp = await post(Uri.parse('https://www.strava.cz/Strava5/Objednavky/Odesli'), headers: {
-    'cookie': cookie
+    'cookie': cookie,
+    "accept": "text/html, */*; q=0.01",
+    "accept-language": "en-US,en;q=0.5",
+    "content-type": "application/json",
+    "sec-ch-ua": "\"Chromium\";v=\"112\", \"Brave\";v=\"112\", \"Not:A-Brand\";v=\"99\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "\"Windows\"",
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-origin",
+    "sec-gpc": "1",
+    "x-requested-with": "XMLHttpRequest",
+    "Referer": "https://www.strava.cz/Strava5/Objednavky",
+    "Referrer-Policy": "strict-origin-when-cross-origin"
   });
   assert(resp.statusCode == 200);
 }

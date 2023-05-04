@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'bakalari.dart';
 
 import 'package:flutter/material.dart';
@@ -13,34 +12,49 @@ class MenuPage extends StatefulWidget{
 }
 
 class _MenuPageState extends State<MenuPage> {
-
-  Box<Map> storage = Hive.box<Map>('storage');
-  Box<int> refresh = Hive.box<int>('refresh');
-  Box<String> user = Hive.box<String>('user');
   String cookie = '';
+
+  @override
+  void initState () {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      loadingDialog(context, () async {
+        String zarizeni = user.get('zarizeni') ?? '';
+        String username = user.get('stravausername') ?? '';
+        String password = user.get('stravapassword') ?? '';
+        if (zarizeni.isEmpty || username.isEmpty || password.isEmpty) return;
+        cookie = await stravaLoginCookie(zarizeni, username, password);
+        Map menu = await loadStravaMenu(cookie);
+        await storage.put('menu', menu);
+        await refresh.put('strava_cookie', DateTime.now().millisecondsSinceEpoch);
+        setState(() {});
+      });
+    });
+  }
 
   @override
   Widget build (BuildContext context) {
     return Scaffold(
       appBar: AppBar(
       title: const Text('Menu'),
-      actions: [
-        IconButton(
-          onPressed: () {
-            loadingDialog(context, () async {
-              String zarizeni = user.get('zarizeni') ?? '';
-              String username = user.get('stravausername') ?? '';
-              String password = user.get('stravapassword') ?? '';
-              if (zarizeni.isEmpty || username.isEmpty || password.isEmpty) return;
-              cookie = await stravaLoginCookie(zarizeni, username, password);
-              Map menu = await loadStravaMenu(cookie);
-              await storage.put('menu', menu);
-              setState(() {});
-            });
-          },
-          icon: const Icon(Icons.send_rounded)
-        ),
-      ],
+      // actions: [
+      //   IconButton(
+      //     onPressed: () {
+      //       // loadingDialog(context, () async {
+      //       //   String zarizeni = user.get('zarizeni') ?? '';
+      //       //   String username = user.get('stravausername') ?? '';
+      //       //   String password = user.get('stravapassword') ?? '';
+      //       //   if (zarizeni.isEmpty || username.isEmpty || password.isEmpty) return;
+      //       //   cookie = await stravaLoginCookie(zarizeni, username, password);
+      //       //   Map menu = await loadStravaMenu(cookie);
+      //       //   await storage.put('menu', menu);
+      //       //   setState(() {});
+      //       // });
+      //       print(storage.get('menu'));
+      //     },
+      //     icon: const Icon(Icons.send_rounded)
+      //   ),
+      // ],
     ),
       body: SingleChildScrollView(
         child: Column(
@@ -58,9 +72,7 @@ class _MenuPageState extends State<MenuPage> {
                 // print(menu);
                 return Column(
                   children: menu.keys.toList().sublist(0, menu.keys.length-1).map((key) {
-                    List day = menu[key];
-                    print(day);
-                    // String dayRev = day['_datum'].split('-').reversed.join('-');
+                    Map day = menu[key];
                     double width = MediaQuery.of(context).size.width;
                     return Padding(
                       padding: const EdgeInsets.all(8.0),
@@ -79,77 +91,81 @@ class _MenuPageState extends State<MenuPage> {
                                 padding: const EdgeInsets.only(bottom: 5.0),
                                 child: DayWidget(DateTime.parse(key)),
                               ),
-                              Text(day[0][2]),
+                              Text(day['soup']),
                               const Divider(),
                               Row(
                                 children: [
-                                  if (day[3]) Padding(
+                                  Padding(
                                     padding: const EdgeInsets.only(right: 8.0),
                                     child: Checkbox(
-                                      value: day[1][0],
+                                      // fillColor: day['enabled'] ? null : const MaterialStatePropertyAll(Colors.grey),
+                                      value: day['first']['ordered'],
                                       onChanged: (bool? newvalue) {
+                                        if (!day['enabled']) return;
                                         if (newvalue == null) return;
                                         setState(() {
-                                          if (day[1][0]) {
+                                          if (day['first']['ordered']) {
                                             loadingDialog(context, () async {
-                                              await setLunch(cookie, day[1][1], 0);
+                                              await setLunch(cookie, day['first']['veta'], 0);
                                               await submitLunches(cookie);
                                               setState(() {
-                                                day[1][0] = false;
+                                                day['first']['ordered'] = false;
                                               });
                                             });
                                           } else {
                                             loadingDialog(context, () async {
-                                              await setLunch(cookie, day[1][1], 1);
+                                              await setLunch(cookie, day['first']['veta'], 1);
                                               await submitLunches(cookie);
                                               setState(() {
-                                                day[1][0] = true;
-                                                day[2][0] = false;
+                                                day['first']['ordered'] = true;
+                                                day['second']['ordered'] = false;
                                               });
                                             });
                                           }
                                         });
                                       },
-                                      activeColor: Colors.blue,
+                                      activeColor: day['enabled'] ? null : Colors.blue,
                                     ),
                                   ),
-                                  SizedBox(width: width - 88, child: Text(day[1][2])),
+                                  SizedBox(width: width - 88, child: Text(day['first']['title'])),
                                 ],
                               ),
                               const Divider(),
-                              if (day[2][2].isNotEmpty) Row(
+                              if (day['second']['title'].isNotEmpty) Row(
                                 children: [
-                                  if (day[3]) Padding(
+                                  Padding(
                                     padding: const EdgeInsets.only(right: 8.0),
                                     child: Checkbox(
-                                      value: day[2][0],
+                                      value: day['second']['ordered'],
+                                      // fillColor: day['enabled'] ? null : const MaterialStatePropertyAll(Colors.grey),
                                       onChanged: (bool? newvalue) {
+                                        if (!day['enabled']) return;
                                         if (newvalue == null) return;
                                         setState(() {
-                                          if (day[2][0]) {
+                                          if (day['second']['ordered']) {
                                             loadingDialog(context, () async {
-                                              await setLunch(cookie, day[2][1], 0);
+                                              await setLunch(cookie, day['second']['veta'], 0);
                                               await submitLunches(cookie);
                                               setState(() {
-                                                day[2][0] = false;
+                                                day['second']['ordered'] = false;
                                               });
                                             });
                                           } else {
                                             loadingDialog(context, () async {
-                                              await setLunch(cookie, day[2][2], 1);
+                                              await setLunch(cookie, day['second']['veta'], 1);
                                               await submitLunches(cookie);
                                               setState(() {
-                                                day[2][0] = true;
-                                                day[1][0] = false;
+                                                day['second']['ordered'] = true;
+                                                day['first']['ordered'] = false;
                                               });
                                             });
                                           }
                                         });
                                       },
-                                      activeColor: Colors.blue,
+                                      activeColor: day['enabled'] ? null : Colors.blue,
                                     ),
                                   ),
-                                  SizedBox(width: width - 88, child: Text(day[2][2])),
+                                  SizedBox(width: width - 88, child: Text(day['second']['title'])),
                                 ],
                               ),
                             ],

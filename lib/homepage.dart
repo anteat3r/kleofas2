@@ -8,9 +8,6 @@ import 'settings.dart';
 import 'events.dart';
 import 'menu.dart';
 import 'calendar.dart';
-import 'bakalari.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:html_unescape/html_unescape.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -19,7 +16,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  Box<String> user = Hive.box<String>('user');
   String cookie = '';
 
   @override
@@ -47,22 +43,22 @@ class _HomePageState extends State<HomePage> {
             onPressed: () {completeReload(context);},
             icon: const Icon(Icons.refresh_rounded)
           ),
-          IconButton(
-            onPressed: () async {
-              cookie = await loginWebCookie(user.get('url') ?? '', user.get('username') ?? '', user.get('password') ?? '');
-            },
-            icon: const Icon(Icons.brunch_dining_sharp)
-          ),
-          IconButton(
-            onPressed: () async {
-              String html2 = await queryWeb(user.get('url') ?? '', 'Timetable/Public', cookie);
-              final options = RegExp(r'<\s*option\s*value="(.+)"\s*>\s*(.+)\s*<\s*\/option\s*>');
-              final matches = options.allMatches(html2);
-              final unescape = HtmlUnescape();
-              print({for (final match in matches) match.group(1): unescape.convert(match.group(2) ?? '?')});
-            },
-            icon: const Icon(Icons.install_desktop_rounded)
-          ),
+          // IconButton(
+          //   onPressed: () async {
+          //     cookie = await loginWebCookie(user.get('url') ?? '', user.get('username') ?? '', user.get('password') ?? '');
+          //   },
+          //   icon: const Icon(Icons.brunch_dining_sharp)
+          // ),
+          // IconButton(
+          //   onPressed: () async {
+          //     String html2 = await queryWeb(user.get('url') ?? '', 'Timetable/Public', cookie);
+          //     final options = RegExp(r'<\s*option\s*value="(.+)"\s*>\s*(.+)\s*<\s*\/option\s*>');
+          //     final matches = options.allMatches(html2);
+          //     final unescape = HtmlUnescape();
+          //     // print({for (final match in matches) match.group(1): unescape.convert(match.group(2) ?? '?')});
+          //   },
+          //   icon: const Icon(Icons.install_desktop_rounded)
+          // ),
           // ValueListenableBuilder(
           //   valueListenable: user.listenable(),
           //   builder: (BuildContext context, Box<String> value, _) => Switch(

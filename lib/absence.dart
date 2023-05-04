@@ -10,9 +10,6 @@ class AbsencePage extends StatefulWidget{
 }
 
 class _AbsencePageState extends State<AbsencePage> {
-
-  Box<Map> storage = Hive.box<Map>('storage');
-  Box<int> refresh = Hive.box<int>('refresh');
   final List<String> czWeekDayNames = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'];
 
   @override

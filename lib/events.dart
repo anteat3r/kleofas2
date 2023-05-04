@@ -12,6 +12,8 @@ AlertDialog eventDialog (Map event, BuildContext context) {
       if (event['Id'].contains('K:')) TextButton(onPressed: () {
         loadingDialog(context, () async {
           final NavigatorState navigator = Navigator.of(context);
+          if (user.get('kleousername') == null || user.get('kleopassword') == null ) return;
+          await pb.collection('users').authWithPassword(user.get('kleousername') ?? '', user.get('kleopassword') ?? '');
           await pb.collection('tasks').delete(event['KleoId']);
           navigator.pop(navigator);
         });
@@ -28,10 +30,6 @@ class EventsPage extends StatefulWidget{
 }
 
 class _EventsPageState extends State<EventsPage> {
-
-  Box<Map> storage = Hive.box<Map>('storage');
-  Box<int> refresh = Hive.box<int>('refresh');
-  Box<String> user = Hive.box<String>('user');
   bool showTasks = true;
 
   @override
@@ -58,7 +56,7 @@ class _EventsPageState extends State<EventsPage> {
         IconButton(
           onPressed: () {
             setState(() {
-              loadEndpoint(context, 'events', 'events/${user.get('event_type') ?? 'my'}');
+              loadEndpoint(context, 'events', 'events/${user.get('event_type')?.split(".")[1] ?? "my"}');
             });
           },
           icon: const Icon(Icons.refresh_rounded)
@@ -117,7 +115,8 @@ class _EventsPageState extends State<EventsPage> {
                                   if (time['WholeDay']) {
                                     return Padding(
                                       padding: const EdgeInsets.all(8.0),
-                                      child: DayWidget(DateTime.parse(time['StartTime']))
+                                      // child: DayWidget(DateTime.parse(time['StartTime']))
+                                      child: Text(time['StartTime'])
                                     );
                                   } else {
                                     return Padding(

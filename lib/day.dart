@@ -115,10 +115,6 @@ class DayPage extends StatefulWidget {
 }
 
 class _DayPageSate extends State<DayPage> {
-
-  Box<Map> storage = Hive.box<Map>('storage');
-  Box<String> user = Hive.box<String>('user');
-  Box<int> refresh = Hive.box<int>('refresh');
   bool timeTableLoaded = false;
 
   Widget hourCell (Map? hour, Map subjects, Map rooms, Map teachers, Map groups, double height, bool current) {

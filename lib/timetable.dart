@@ -12,9 +12,6 @@ class TimetablePage extends StatefulWidget{
 }
 
 class _TimetablePageState extends State<TimetablePage> {
-
-  Box<Map> storage = Hive.box<Map>('storage');
-  Box<int> refresh = Hive.box<int>('refresh');
   int weeksOffset = 0;
   final List<String> czWeekDayNames = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'];
 

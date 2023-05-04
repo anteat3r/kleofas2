@@ -1,4 +1,3 @@
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:kleofas2/storage.dart';
@@ -23,8 +22,6 @@ class CalendarPage extends StatefulWidget {
 }
 
 class _CalendarPageSate extends State<CalendarPage> {
-  
-  Box<Map> storage = Hive.box<Map>('storage');
   double cellWidth = 0;
   double cellHeight = 40;
   DateTime schoolYearStart = DateTime(DateTime.now().year - (DateTime.now().month < 8 ? 1 : 0), 9, 1);

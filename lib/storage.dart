@@ -12,6 +12,9 @@ import 'package:pocketbase/pocketbase.dart';
 Map<String, String> ids = {"08": "0.C", "0B": "0.J", "0C": "0.M", "05": "U21", "07": "1.J", "06": "1.M", "04": "2.C", "02": "2.J", "03": "2.M", "ZZ": "3.C", "00": "3.J", "01": "3.M", "ZW": "4.C", "ZX": "4.J", "ZY": "4.M", "ZT": "5.J", "ZS": "5.M", "ZR": "6.J", "ZQ": "6.M", "ZO": "7.J", "ZM": "7.M", "ZL": "8.J", "ZK": "8.M", "UUZFR": "Balák Ondřej", "UPZEK": "Beuzon Benoit", "UTZFE": "Frimlová Klára", "UZZAQ": "Haschková Pavla", "UOZEB": "Holíková Jolana", "UZZC3": "Holubová Ivana", "UTVCG": "Hradová Pecinová Zuzana", "UWZGC": "Chvosta Petr", "UKZD6": "Jahn Vítězslav", "UZZAS": "Jirošová Štěpánka", "UVZG4": "Kirschner Věra", "UZZC5": "Kocourková Blanka", "UWZGI": "Kocúrová Zuzana", "UTZFG": "Kolářová Magdaléna", "UWZG6": "Kubelková Natálie", "UOZE5": "Loula Karel", "UWZGB": "Lukáčová Denisa", "UWZGG": "Mádlová Zdenka", "UXZGL": "Matějka Jakub", "URZEY": "Matušík Michal", "UUZFW": "Mazná Michaela", "UWZG7": "Miškovský Jakub", "UQZEQ": "Nosková Alena", "UAPP8": "Nováková Renata", "UK8S1": "Ortinská Ludmila", "UZZ9N": "Pauchová Renata", "UZZC9": "Pavel Josef", "USZFA": "Pavlousek Pavel", "U9F2I": "Pěchová Světlana", "USZF8": "Petrová Eva", "UKZD5": "Petržílka František", "ULZDF": "Plese Conor", "UWZG8": "Procházka Marek", "UKZD3": "Prokopec Michal", "UUZFV": "Radvanová Sabina", "UTZFK": "Roček Daniel", "UZZBZ": "Růžičková Lucie", "UUZFY": "Růžičková Monika", "UZZCC": "Růžičková Václava", "UZZ9X": "Semeráková Vladimíra", "UTZFM": "Skálová Zuzana", "UKZD4": "Skoupilová Petra", "UZZCL": "Stárová Martina", "UXZGK": "Stockmann Alissia", "UKZD7": "Stříbrná Leona", "UWZGA": "Suldovská Klára", "UQZEU": "Šperl Jiří", "UQZET": "Štěchová Linda", "UDZUD": "Švarcová Dagmar", "USZF6": "Tůmová Jaroslava", "UTZFD": "Valášková Andrea", "UWZGE": "Vilímová Sheila", "UWZGD": "Vincena Petr", "UVZG3": "Wangerin Torben", "UWZG9": "Wilhelm Lukáš", "UUZFP": "Yaghobová Anna", "UUZFT": "Zajíc František", "USZFC": "Zítka Martin", "Y6": "AUL", "4E": "F", "F2": "Fit", "YL": "Fl", "0D": "Chl", "C7": "I1", "RI": "I2", "NW": "TMS", "YJ": "TSO", "30": "Tv", "YM": "U1", "0W": "U10", "GZ": "U11", "1K": "U12", "N7": "U13", "YG": "U14", "YI": "U15", "YN": "U2", "N6": "U22", "PU": "U23", "LG": "U24", "Y2": "U25", "YC": "U26", "YD": "U27", "D5": "U31", "OG": "U32", "YB": "U33", "YE": "U34", "Y7": "U35", "63": "U36", "Y9": "U37", "Y8": "U38", "2D": "U41", "PZ": "U42", "68": "U43", "YF": "U44", "YO": "Zas"};
 
 final pb = PocketBase('https://pb.kleofas.pro:443'); 
+Box<Map> storage = Hive.box<Map>('storage');
+Box<String> user = Hive.box<String>('user');
+Box<int> refresh = Hive.box<int>('refresh');
 
 void loadingDialog (BuildContext context, Function func) async {
   final NavigatorState navigator = Navigator.of(context);
@@ -38,7 +41,6 @@ void loadingDialog (BuildContext context, Function func) async {
 
 void loginUser (BuildContext context) async {
   loadingDialog(context, () async {
-    Box<String> user = Hive.box<String>('user');
     Result token = await login(user.get('url') ?? '', user.get('username') ?? '', user.get('password') ?? '');
     if (token.isFailure) {
       throw ErrorDescription(jsonDecode(token.failure)['error_description']);
@@ -49,17 +51,22 @@ void loginUser (BuildContext context) async {
 
 void loadEndpoint (BuildContext context, String endpoint, [String? url, Map<String, dynamic>? payload]) async {
   loadingDialog(context, () async {
-    Box<String> user = Hive.box<String>('user');
-    Box<Map> storage = Hive.box<Map>('storage');
-    Box<int> refresh = Hive.box<int>('refresh');
     Result res = await query(user.get('url') ?? '', user.get('token') ?? '', url ?? endpoint, payload);
     if (res.isFailure) {
-      throw AssertionError(res.failure);
+      Result token = await login(user.get('url') ?? '', user.get('username') ?? '', user.get('password') ?? '');
+      if (token.isFailure) {
+        throw AssertionError(res.failure);
+      }
+      await user.put('token', token.success);
     }
-    await Future.wait([
-      storage.put(endpoint, res.success),
-      refresh.put(endpoint, DateTime.now().millisecondsSinceEpoch)
-    ]);
+    if (res.isSuccess) {
+      await Future.wait([
+        storage.put(endpoint, res.success),
+        refresh.put(endpoint, DateTime.now().millisecondsSinceEpoch)
+      ]);
+    } else {
+      throw AssertionError('bruh');
+    }
   });
 }
 
@@ -74,9 +81,6 @@ Map mapListToMap (List list, {String id = 'Id'}) => {for (Map item in list) item
 
 void loadMenu(BuildContext context) async {
   loadingDialog(context, () async {
-    final Box<String> user = Hive.box<String>('user');
-    final Box<Map> storage = Hive.box<Map>('storage');
-    final Box<int> refresh = Hive.box<int>('refresh');
     final Response res = await get(Uri.https('strava.cz', 'strava5/Jidelnicky/XML', {'zarizeni': user.get('zarizeni') ?? '3753'}));
     if (res.statusCode != 200) {
       throw AssertionError(res.body);
@@ -108,8 +112,6 @@ Future<void> loadMenuFuture (String zarizeni, Box<Map> storage, Box<int> refresh
 
 void loadTasks (BuildContext context) async {
   loadingDialog(context, () async {
-    final Box<Map> storage = Hive.box<Map>('storage');
-    final Box<int> refresh = Hive.box<int>('refresh');
     final tasks = await pb.collection('tasks').getFullList();
     await Future.wait([
       storage.put('tasks', {'Tasks': tasks.map((e) => e.data['json']..['KleoId'] = e.id).toList()}),
@@ -155,7 +157,6 @@ Future<void> addTask (String subject, String date, String title, String descript
       });
     }
   }
-  final Box<Map> storage = Hive.box<Map>('storage');
   final Map payload = {
     'Id': 'K:${DateTime.now().millisecondsSinceEpoch}',
     'Title': title,
@@ -187,6 +188,8 @@ Future<void> addTask (String subject, String date, String title, String descript
     'Note': 'From Kleofáš v0.0.0',
     'DateChnged': DateTime.now().toIso8601String()
   };
+  if (user.get('kleousername') == null || user.get('kleopassword') == null ) return;
+  await pb.collection('users').authWithPassword(user.get('kleousername') ?? '', user.get('kleopassword') ?? '');
   await Future.wait([
     pb.collection('tasks').create(body: {'json': jsonEncode(payload)}),
     storage.put('tasks', (storage.get('tasks') ?? {'Tasks': []})..['Tasks'].add(payload))
@@ -286,20 +289,25 @@ void newTaskDialog (BuildContext context, [DateTime? date]) async {
 }
 
 Future<void> loadEndpointFuture (String userUrl, String token, Box<Map> storage, Box<int> refresh, String endpoint, [String? url, Map<String, dynamic>? payload]) async {
-  Result res = await query(userUrl, token, url ?? endpoint, payload);
+  Result res = await query(user.get('url') ?? '', user.get('token') ?? '', url ?? endpoint, payload);
   if (res.isFailure) {
-    throw AssertionError(res.failure);
+    Result token = await login(user.get('url') ?? '', user.get('username') ?? '', user.get('password') ?? '');
+    if (token.isFailure) {
+      throw AssertionError(res.failure);
+    }
+    await user.put('token', token.success);
   }
-  await Future.wait([
-    storage.put(endpoint, res.success),
-    refresh.put(endpoint, DateTime.now().millisecondsSinceEpoch)
-  ]);
+  if (res.isSuccess) {
+    await Future.wait([
+      storage.put(endpoint, res.success),
+      refresh.put(endpoint, DateTime.now().millisecondsSinceEpoch)
+    ]);
+  } else {
+    throw AssertionError('bruh');
+  }
 }
 
 Future<void> completeReloadFuture () async {
-  Box<String> user = Hive.box<String>('user');
-  Box<Map> storage = Hive.box<Map>('storage');
-  Box<int> refresh = Hive.box<int>('refresh');
   String url = user.get('url') ?? '';
   String token = user.get('token') ?? '';
   String zarizeni = user.get('zarizeni') ?? '3753';

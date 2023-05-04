@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'storage.dart';
 
 class SettingsPage extends StatefulWidget{
@@ -12,8 +11,6 @@ enum Gender {civilAttackHelicopter}
 enum EventType {my, all, public}
 
 class _SettingsPageState extends State<SettingsPage> {
-
-  Box<String> user = Hive.box<String>('user');
   final TextEditingController username = TextEditingController();
   final TextEditingController password = TextEditingController();
   final TextEditingController url = TextEditingController();

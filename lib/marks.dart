@@ -10,9 +10,6 @@ class MarksPage extends StatefulWidget{
 }
 
 class _MarksPageState extends State<MarksPage> {
-
-  Box<Map> storage = Hive.box<Map>('storage');
-  Box<int> refresh = Hive.box<int>('refresh');
   String currentSubject = '';
   bool showSubjects = false;
   //Map mapListToMap (List list, {String id = 'Id'}) => {for (Map item in list) item[id]: item};

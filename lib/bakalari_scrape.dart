@@ -16,8 +16,6 @@ class EventsPage extends StatefulWidget{
 }
 
 class _EventsPageState extends State<EventsPage> {
-  Box<String> user = Hive.box<String>('user');
-  Box<Map> storage = Hive.box<Map>('storage');
   final List<String> czWeekDayNames = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'];
 
   Widget hourTitleCell (Map hour, double maxHeight) {
