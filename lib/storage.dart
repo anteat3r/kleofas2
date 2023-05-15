@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'bakalari.dart';
 import 'package:result_type/result_type.dart';
 import 'package:intl/intl.dart';
@@ -17,26 +16,20 @@ Box<String> user = Hive.box<String>('user');
 Box<int> refresh = Hive.box<int>('refresh');
 
 void loadingDialog (BuildContext context, Function func) async {
-  final NavigatorState navigator = Navigator.of(context);
-  showDialog(context: context, builder: (BuildContext context) {
-    return Dialog(
-      child: LoadingAnimationWidget.newtonCradle(color: Colors.yellow, size: 50),
-    );
-  });
-  await func();
-  navigator.pop();
-  // try {
-  //   await func();
-  //   navigator.pop();
-  // } catch (e) {
-  //   navigator.pop();
-  //   showDialog(context: context, builder: (BuildContext context) {
-  //     return AlertDialog(
-  //       title: const Text('Error'),
-  //       content: Text(e.toString()),
-  //     );
-  //   });
-  // }
+  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('loading'),),);
+  try {
+    await func();
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+  } catch (e) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    showDialog(context: context, builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('Error'),
+        content: Text(e.toString()),
+      );
+    });
+  }
 }
 
 void loginUser (BuildContext context) async {

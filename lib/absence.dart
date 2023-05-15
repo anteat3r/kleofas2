@@ -87,7 +87,7 @@ class _AbsencePageState extends State<AbsencePage> {
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.only(right: 8.0),
-                                  child: DayWidget(DateTime.parse(absence['Date'])),
+                                  child: DayWidget(roundDateTime(DateTime.parse(absence['Date']))),
                                 ),
                               ],
                             ),

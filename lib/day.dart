@@ -363,6 +363,12 @@ class _DayPageSate extends State<DayPage> {
               )
             )
           ],
+          OutlinedButton(
+            onPressed: () {
+              newTaskDialog(context, widget.date);
+            },
+            child: const Text("Přidat task")
+          )
           ],
         ),
       ),

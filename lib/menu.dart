@@ -95,7 +95,8 @@ class _MenuPageState extends State<MenuPage> {
                               const Divider(),
                               Row(
                                 children: [
-                                  Padding(
+                                  // Padding(
+                                  if (day['soup'] != day['first']['title']) Padding(
                                     padding: const EdgeInsets.only(right: 8.0),
                                     child: Checkbox(
                                       // fillColor: day['enabled'] ? null : const MaterialStatePropertyAll(Colors.grey),
@@ -124,7 +125,7 @@ class _MenuPageState extends State<MenuPage> {
                                           }
                                         });
                                       },
-                                      activeColor: day['enabled'] ? null : Colors.blue,
+                                      activeColor: day['enabled'] ? Colors.blue : Colors.grey,
                                     ),
                                   ),
                                   SizedBox(width: width - 88, child: Text(day['first']['title'])),
@@ -133,7 +134,8 @@ class _MenuPageState extends State<MenuPage> {
                               const Divider(),
                               if (day['second']['title'].isNotEmpty) Row(
                                 children: [
-                                  Padding(
+                                  if (day['soup'] != day['second']['title']) Padding(
+                                  // Padding(
                                     padding: const EdgeInsets.only(right: 8.0),
                                     child: Checkbox(
                                       value: day['second']['ordered'],
@@ -162,7 +164,7 @@ class _MenuPageState extends State<MenuPage> {
                                           }
                                         });
                                       },
-                                      activeColor: day['enabled'] ? null : Colors.blue,
+                                      activeColor: day['enabled'] ? Colors.blue : Colors.grey,
                                     ),
                                   ),
                                   SizedBox(width: width - 88, child: Text(day['second']['title'])),
