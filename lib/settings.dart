@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'storage.dart';
 
@@ -19,8 +20,10 @@ class _SettingsPageState extends State<SettingsPage> {
   final TextEditingController kleopassword = TextEditingController();
   final TextEditingController stravausername = TextEditingController();
   final TextEditingController stravapassword = TextEditingController();
+  final TextEditingController qrpayload = TextEditingController();
   bool passwordVisible = false;
   EventType eventType = EventType.my;
+  String qrpath = "";
 
 
   @override
@@ -34,6 +37,8 @@ class _SettingsPageState extends State<SettingsPage> {
     kleopassword.text = user.get('kleopassword') ?? '';
     stravausername.text = user.get('stravausername') ?? '';
     stravapassword.text = user.get('stravapassword') ?? '';
+    qrpayload.text = user.get('qrpayload') ?? '';
+    qrpath = user.get('qrpath') ?? '';
     if (user.get('event_type') == null) return;
     if (user.get('event_type') == 'EventType.my') {
       eventType = EventType.my;
@@ -298,6 +303,34 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ),
             ),
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text('Qr kód'),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: OutlinedButton(
+                onPressed: () async {
+                  final res = await FilePicker.platform.pickFiles();
+                  if (res == null) return;
+                  qrpath = res.files.single.path ?? "";
+                },
+                child: const Text("Vybrat soubor")
+              ),
+              // child: TextField(
+              //   maxLines: 1,
+              //   controller: qrpayload,
+              //   decoration: const InputDecoration(
+              //     hintText: "payload qr kódu",
+              //     border: OutlineInputBorder(
+              //       borderSide: BorderSide(
+              //         width: 1
+              //       ),
+              //       borderRadius: BorderRadius.all(Radius.circular(10))
+              //     )
+              //   ),
+              // ),
+            ),
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: OutlinedButton(
@@ -312,6 +345,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   await user.put('url', url.text);
                   await user.put('zarizeni', zarizeni.text);
                   await user.put('event_type', eventType.toString());
+                  await user.put('qrpayload', qrpayload.text);
+                  await user.put('qrpath', qrpath);
                   // username.text = user.get('username') ?? '';
                   // password.text = user.get('password') ?? '';
                   // kleousername.text = user.get('kleousername') ?? '';
@@ -331,7 +366,17 @@ class _SettingsPageState extends State<SettingsPage> {
                 });},
                 child: const Text('Save')
               ),
-            )
+            ),
+            // Padding(
+            //   padding: const EdgeInsets.all(8.0),
+            //   child: QrImageView(
+            //     data: user.get("qrpayload") ?? "",
+            //     version: 1,
+            //     errorCorrectionLevel: QrErrorCorrectLevel.Q,
+            //     size: MediaQuery.of(context).size.width*3,
+            //     backgroundColor: Colors.white,
+            //   )
+            // ),
           ],
         ),
       ),

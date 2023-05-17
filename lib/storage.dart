@@ -42,6 +42,14 @@ void loginUser (BuildContext context) async {
   });
 }
 
+Future<void> loginUserFuture () async {
+  Result token = await login(user.get('url') ?? '', user.get('username') ?? '', user.get('password') ?? '');
+  if (token.isFailure) {
+    throw ErrorDescription(jsonDecode(token.failure)['error_description']);
+  }
+  await user.put('token', token.success);
+}
+
 void loadEndpoint (BuildContext context, String endpoint, [String? url, Map<String, dynamic>? payload]) async {
   loadingDialog(context, () async {
     Result res = await query(user.get('url') ?? '', user.get('token') ?? '', url ?? endpoint, payload);
@@ -300,10 +308,19 @@ Future<void> loadEndpointFuture (String userUrl, String token, Box<Map> storage,
   }
 }
 
+Future<void> loginPbFuture () async {
+  if (user.get('kleousername') == null || user.get('kleopassword') == null ) return;
+  await pb.collection('users').authWithPassword(user.get('kleousername') ?? '', user.get('kleopassword') ?? '');
+}
+
 Future<void> completeReloadFuture () async {
   String url = user.get('url') ?? '';
   String token = user.get('token') ?? '';
   String zarizeni = user.get('zarizeni') ?? '3753';
+  await Future.wait([
+    loginUserFuture(),
+    loginPbFuture(),
+  ]);
   await Future.wait([
     loadEndpointFuture(url, token, storage, refresh, 'timetable', 'timetable/actual'),
     loadEndpointFuture(url, token, storage, refresh, 'absence', 'absence/student'),

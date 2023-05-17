@@ -8,6 +8,7 @@ import 'settings.dart';
 import 'events.dart';
 import 'menu.dart';
 import 'calendar.dart';
+import 'qr.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -24,14 +25,14 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: const Text('Main menu'),
         actions: [
-          IconButton(
-            onPressed: () {
-              loginUser(context);
-              if (user.get('kleousername') == null || user.get('kleopassword') == null ) return;
-              loadingDialog(context, () async {await pb.collection('users').authWithPassword(user.get('kleousername') ?? '', user.get('kleopassword') ?? '');});
-            },
-            icon: const Icon(Icons.supervised_user_circle)
-          ),
+          // IconButton(
+          //   onPressed: () {
+          //     loginUser(context);
+          //     if (user.get('kleousername') == null || user.get('kleopassword') == null ) return;
+          //     loadingDialog(context, () async {await pb.collection('users').authWithPassword(user.get('kleousername') ?? '', user.get('kleopassword') ?? '');});
+          //   },
+          //   icon: const Icon(Icons.supervised_user_circle)
+          // ),
           // IconButton(
           //   onPressed: () async {
           //     Map googleAuth = (await pb.collection('users').listAuthMethods()).toJson()['authProviders'][0];
@@ -129,6 +130,26 @@ class _HomePageState extends State<HomePage> {
                 icon: const Icon(Icons.calendar_month_rounded,),
                 iconSize: 70,
               ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <IconButton>[
+              IconButton(
+                onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const QrPage()));},
+                icon: const Icon(Icons.qr_code_2_rounded,),
+                iconSize: 70,
+              ),
+              // IconButton(
+              //   onPressed: () {newTaskDialog(context);},
+              //   icon: const Icon(Icons.add_box_outlined,),
+              //   iconSize: 70,
+              // ),
+              // IconButton(
+              //   onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const CalendarPage()));},
+              //   icon: const Icon(Icons.calendar_month_rounded,),
+              //   iconSize: 70,
+              // ),
             ],
           ),
         ],
