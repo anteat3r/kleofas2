@@ -1,5 +1,4 @@
 import 'bakalari.dart';
-
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'storage.dart';
@@ -59,12 +58,12 @@ class _MenuPageState extends State<MenuPage> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            ValueListenableBuilder(
-              valueListenable: refresh.listenable(),
-              builder: (BuildContext context, Box<int> value, child) {
-                return Text(czDate(DateTime.fromMillisecondsSinceEpoch(value.get('menu') ?? 0).toString()));
-              }
-            ),
+            // ValueListenableBuilder(
+            //   valueListenable: refresh.listenable(),
+            //   builder: (BuildContext context, Box<int> value, child) {
+            //     return Text(czDate(DateTime.fromMillisecondsSinceEpoch(value.get('menu') ?? 0).toString()));
+            //   }
+            // ),
             ValueListenableBuilder(
               valueListenable: storage.listenable(),
               builder: (BuildContext context, Box<Map> value, child) {

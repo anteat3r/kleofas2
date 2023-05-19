@@ -43,7 +43,7 @@ class _QrPageState extends State<QrPage> {
   @override
   Widget build (BuildContext context) {
     final now = DateTime.now();
-    Duration diff = DateTime(now.year, now.month, now.day, 20, 56, 0, 0, 0).difference(now);
+    Duration diff = DateTime(now.year, now.month, now.day, 7, 56, 0, 0, 0).difference(now);
     diff = Duration(hours: diff.inHours, minutes: diff.inMinutes, seconds: diff.inSeconds);
     return Scaffold(
       appBar: AppBar(
@@ -52,7 +52,7 @@ class _QrPageState extends State<QrPage> {
       body: Column(
         children: [
           if ((user.get("qrpath") ?? "").isNotEmpty) Image.file(File(user.get("qrpath") ?? "")),
-          if (now.hour < 21 ? now.minute < 56 : false) Text(renderDuration(diff))
+          if (now.hour < 8 ? now.minute < 56 : false) Text(renderDuration(diff))
         ],
       ),
     );

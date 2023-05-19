@@ -21,6 +21,7 @@ void main() async {
 @pragma('vm:entry-point')
 void callbackDispatcher () {
   Workmanager().executeTask((taskName, inputData) async {
+    WidgetsFlutterBinding.ensureInitialized();
     await Hive.initFlutter();
     await Hive.openBox<String>('user');
     await Hive.openBox<Map>('storage');

@@ -22,6 +22,7 @@ class _SettingsPageState extends State<SettingsPage> {
   final TextEditingController stravapassword = TextEditingController();
   final TextEditingController qrpayload = TextEditingController();
   bool passwordVisible = false;
+  bool autoreload = false;
   EventType eventType = EventType.my;
   String qrpath = "";
 
@@ -39,6 +40,7 @@ class _SettingsPageState extends State<SettingsPage> {
     stravapassword.text = user.get('stravapassword') ?? '';
     qrpayload.text = user.get('qrpayload') ?? '';
     qrpath = user.get('qrpath') ?? '';
+    autoreload = (user.get('autoreload') ?? '').isNotEmpty;
     if (user.get('event_type') == null) return;
     if (user.get('event_type') == 'EventType.my') {
       eventType = EventType.my;
@@ -333,6 +335,21 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
+              child: ListTile(
+                title: const Text('Auto Reload'),
+                leading: Checkbox(
+                  value: autoreload,
+                  onChanged: (bool? value) {
+                    if (value == null) return;
+                    setState(() {
+                      autoreload = value;
+                    });
+                  },
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
               child: OutlinedButton(
                 onPressed: () {loadingDialog(context, () async {
                   final NavigatorState navigator = Navigator.of(context);
@@ -347,6 +364,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   await user.put('event_type', eventType.toString());
                   await user.put('qrpayload', qrpayload.text);
                   await user.put('qrpath', qrpath);
+                  await user.put('autoreload', autoreload ? 'true' : '');
                   // username.text = user.get('username') ?? '';
                   // password.text = user.get('password') ?? '';
                   // kleousername.text = user.get('kleousername') ?? '';

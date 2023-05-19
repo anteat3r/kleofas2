@@ -9,6 +9,8 @@ import 'events.dart';
 import 'menu.dart';
 import 'calendar.dart';
 import 'qr.dart';
+// import 'package:permission_handler/permission_handler.dart';
+// import 'package:hive_flutter/hive_flutter.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -18,6 +20,16 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String cookie = '';
+
+  @override
+  void initState () {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      if ((user.get("autoreload") ?? "").isNotEmpty) {
+        completeReload(context);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

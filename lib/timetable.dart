@@ -28,21 +28,21 @@ class _TimetablePageState extends State<TimetablePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              hour['Caption'],
+              hour?['Caption'],
               style: const TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 20,
               ),
             ),
             Text(
-              hour['BeginTime'],
+              hour?['BeginTime'],
               style: const TextStyle(
                 fontWeight: FontWeight.w500,
                 fontSize: 12,
               ),
             ),
             Text(
-              hour['EndTime'],
+              hour?['EndTime'],
               style: const TextStyle(
                 fontWeight: FontWeight.w500,
                 fontSize: 12,
@@ -120,7 +120,7 @@ class _TimetablePageState extends State<TimetablePage> {
           showDialog(context: context, builder: (BuildContext context) {
             return AlertDialog(
               title: const Text('Hodina'),
-              content: Text('Skupiny: ${hour["GroupIds"]?.map((item) => groups[item]["Abbrev"]).join(" ")}\nPředmět: ${subjects[hour["SubjectId"]]?["Name"]}\nUčitel: ${teachers[hour["TeacherId"]]?["Name"]}\nUčebna: ${rooms[hour["RoomId"]]?["Abbrev"]}\nTéma: ${hour["Theme"]}\nZměna: ${hour["Change"] == null ? '' : '\n  Změna předmětu: ${hour["Change"]["ChangeSubject"]}\n  Den: ${czDate(hour["Change"]["Day"])}\n  Hodiny: ${hour["Change"]["Hours"]}\n  Typ změny: ${hour["Change"]["ChangeType"]}\n  Popis: ${hour["Change"]["Description"]}\n  Čas: ${hour["Change"]["Time"]}\n  Zkratka typu: ${hour["Change"]["TypeAbbrev"]}\n  Název typu: ${hour["Change"]["TypeName"]}'}'),
+              content: Text('Skupiny: ${hour?["GroupIds"]?.map((item) => groups[item]["Abbrev"]).join(" ")}\nPředmět: ${subjects[hour?["SubjectId"]]?["Name"]}\nUčitel: ${teachers[hour?["TeacherId"]]?["Name"]}\nUčebna: ${rooms[hour?["RoomId"]]?["Abbrev"]}\nTéma: ${hour?["Theme"]}\nZměna: ${hour?["Change"] == null ? '' : '\n  Změna předmětu: ${hour?["Change"]["ChangeSubject"]}\n  Den: ${czDate(hour?["Change"]["Day"])}\n  Hodiny: ${hour?["Change"]["Hours"]}\n  Typ změny: ${hour?["Change"]["ChangeType"]}\n  Popis: ${hour?["Change"]["Description"]}\n  Čas: ${hour?["Change"]["Time"]}\n  Zkratka typu: ${hour?["Change"]["TypeAbbrev"]}\n  Název typu: ${hour?["Change"]["TypeName"]}'}'),
               actions: [
                 TextButton(onPressed: () {Navigator.pop(context);}, child: const Text('Ok'))
               ],
@@ -131,8 +131,10 @@ class _TimetablePageState extends State<TimetablePage> {
           shape: MaterialStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
           backgroundColor: MaterialStatePropertyAll(
             hour?['Change'] != null
-            ? Colors.lightBlue
-            : hour == null || hour['TeacherId'] == null
+            ? ( hour?['Change']?['TypeAbbrev'] == null
+              ? Colors.lightBlue
+              : Colors.lightBlue.shade700 )
+            : hour == null || hour?['TeacherId'] == null
               ? const Color.fromARGB(255, 48, 48, 48)
               : Colors.blue.shade800
           ),
@@ -142,14 +144,14 @@ class _TimetablePageState extends State<TimetablePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              (hour == null || hour['TeacherId'] == null) ? '' : subjects[hour['SubjectId']]?['Abbrev'] ?? 'null',
+              (hour == null || hour?['TeacherId'] == null) ? (hour?["Change"]?["TypeAbbrev"] ?? '') : subjects[hour?['SubjectId']]?['Abbrev'] ?? 'null',
               style: const TextStyle(
                 fontWeight: FontWeight.w900,
                 fontSize: 20,
               ),
             ),
             Text(
-              (hour == null || hour['TeacherId'] == null) ? '' : (teachers[hour['TeacherId']]['Abbrev'] ?? 'null') + '\n' + (rooms[hour['RoomId']]['Abbrev'] ?? 'null') + '\n' + (groups[hour['GroupIds'][0]]['Abbrev'] ?? 'null'),
+              (hour == null || hour?['TeacherId'] == null) ? '' : (teachers[hour?['TeacherId']]['Abbrev'] ?? 'null') + '\n' + (rooms[hour?['RoomId']]['Abbrev'] ?? 'null') + '\n' + (groups[hour?['GroupIds'][0]]['Abbrev'] ?? 'null'),
               textAlign: TextAlign.left,
               style: const TextStyle(
                 fontWeight: FontWeight.w500,
