@@ -84,7 +84,7 @@ class _MarksPageState extends State<MarksPage> {
                               children: <Widget>[
                                 Padding(
                                   padding: const EdgeInsets.only(right: 8.0),
-                                  child: SizedBox(width: 40, child: Text(subjectMarks['AverageText'], style: const TextStyle(fontSize: 20),)),
+                                  child: SizedBox(width: 60, child: Text(subjectMarks['AverageText'], style: const TextStyle(fontSize: 20),)),
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.only(right: 8.0),

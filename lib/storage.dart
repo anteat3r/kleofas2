@@ -4,7 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'bakalari.dart';
 import 'package:result_type/result_type.dart';
 import 'package:intl/intl.dart';
-import 'package:http/http.dart';
+// import 'package:http/http.dart';
 // import 'package:xml2json/xml2json.dart';
 import 'package:pocketbase/pocketbase.dart';
 
@@ -14,21 +14,21 @@ final pb = PocketBase('https://pb.kleofas.pro:443');
 Box<Map> storage = Hive.box<Map>('storage');
 Box<String> user = Hive.box<String>('user');
 Box<int> refresh = Hive.box<int>('refresh');
+Box<Map> passwords = Hive.box<Map>('passwords');
 
 void loadingDialog (BuildContext context, Function func) async {
   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('loading'),),);
   try {
     await func();
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
   } catch (e) {
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     showDialog(context: context, builder: (BuildContext context) {
       return AlertDialog(
         title: const Text('Error'),
         content: Text(e.toString()),
       );
     });
+  } finally {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
   }
 }
 
@@ -316,7 +316,7 @@ Future<void> loginPbFuture () async {
 Future<void> completeReloadFuture () async {
   String url = user.get('url') ?? '';
   String token = user.get('token') ?? '';
-  String zarizeni = user.get('zarizeni') ?? '3753';
+  // String zarizeni = user.get('zarizeni') ?? '3753';
   await Future.wait([
     loginUserFuture(),
     loginPbFuture(),

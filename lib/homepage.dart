@@ -9,6 +9,7 @@ import 'events.dart';
 import 'menu.dart';
 import 'calendar.dart';
 import 'qr.dart';
+import 'password.dart';
 // import 'package:permission_handler/permission_handler.dart';
 // import 'package:hive_flutter/hive_flutter.dart';
 
@@ -152,11 +153,11 @@ class _HomePageState extends State<HomePage> {
                 icon: const Icon(Icons.qr_code_2_rounded,),
                 iconSize: 70,
               ),
-              // IconButton(
-              //   onPressed: () {newTaskDialog(context);},
-              //   icon: const Icon(Icons.add_box_outlined,),
-              //   iconSize: 70,
-              // ),
+              IconButton(
+                onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const PasswordPage()));},
+                icon: const Icon(Icons.key_rounded,),
+                iconSize: 70,
+              ),
               // IconButton(
               //   onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const CalendarPage()));},
               //   icon: const Icon(Icons.calendar_month_rounded,),

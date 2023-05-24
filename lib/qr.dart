@@ -37,7 +37,7 @@ class _QrPageState extends State<QrPage> {
       minutes = "${seconds ~/ 60} m ";
       seconds %= 60;
     }
-    return "$hours$minutes${seconds} s";
+    return "$hours$minutes$seconds s";
   }
 
   @override
