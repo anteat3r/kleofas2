@@ -16,6 +16,18 @@ Box<String> user = Hive.box<String>('user');
 Box<int> refresh = Hive.box<int>('refresh');
 Box<Map> passwords = Hive.box<Map>('passwords');
 
+String getPassword (String key, String field, [dynamic def]) {
+  String? res = passwords.get(key)?[field]?["value"]?.toString();
+  if (res == null && def == null) {
+    throw AssertionError("credential $field in $key not found");
+  }
+  return res ?? def;
+}
+
+bool hasPassword (String key, String field) {
+  return passwords.get(key)?[field]?["value"] != null;
+}
+
 void loadingDialog (BuildContext context, Function func) async {
   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('loading'),),);
   try {
@@ -34,7 +46,7 @@ void loadingDialog (BuildContext context, Function func) async {
 
 void loginUser (BuildContext context) async {
   loadingDialog(context, () async {
-    Result token = await login(user.get('url') ?? '', user.get('username') ?? '', user.get('password') ?? '');
+    Result token = await login(getPassword("bakalari", "url"), getPassword("bakalari", "username"), getPassword("bakalari", "password"));
     if (token.isFailure) {
       throw ErrorDescription(jsonDecode(token.failure)['error_description']);
     }
@@ -43,7 +55,9 @@ void loginUser (BuildContext context) async {
 }
 
 Future<void> loginUserFuture () async {
-  Result token = await login(user.get('url') ?? '', user.get('username') ?? '', user.get('password') ?? '');
+  print([getPassword("bakalari", "url"), getPassword("bakalari", "username"), getPassword("bakalari", "password")]);
+  Result token = await login(getPassword("bakalari", "url"), getPassword("bakalari", "username"), getPassword("bakalari", "password"));
+  print(token);
   if (token.isFailure) {
     throw ErrorDescription(jsonDecode(token.failure)['error_description']);
   }
@@ -52,13 +66,14 @@ Future<void> loginUserFuture () async {
 
 void loadEndpoint (BuildContext context, String endpoint, [String? url, Map<String, dynamic>? payload]) async {
   loadingDialog(context, () async {
-    Result res = await query(user.get('url') ?? '', user.get('token') ?? '', url ?? endpoint, payload);
+    Result res = await query(getPassword("bakalari", "url"), user.get('token') ?? '', url ?? endpoint, payload);
     if (res.isFailure) {
-      Result token = await login(user.get('url') ?? '', user.get('username') ?? '', user.get('password') ?? '');
+      Result token = await login(getPassword("bakalari", "url"), getPassword("bakalari", "username"), getPassword("bakalari", "password"));
       if (token.isFailure) {
         throw AssertionError(res.failure);
       }
       await user.put('token', token.success);
+      return;
     }
     if (res.isSuccess) {
       await Future.wait([
@@ -189,8 +204,8 @@ Future<void> addTask (String subject, String date, String title, String descript
     'Note': 'From Kleofáš v0.0.0',
     'DateChnged': DateTime.now().toIso8601String()
   };
-  if (user.get('kleousername') == null || user.get('kleopassword') == null ) return;
-  await pb.collection('users').authWithPassword(user.get('kleousername') ?? '', user.get('kleopassword') ?? '');
+  if (!hasPassword("kleofas", "username") || !hasPassword("klefoas", "password")) return;
+  await pb.collection('users').authWithPassword(getPassword("bakalari", "username"), getPassword("bakalari", "password"));
   await Future.wait([
     pb.collection('tasks').create(body: {'json': jsonEncode(payload)}),
     storage.put('tasks', (storage.get('tasks') ?? {'Tasks': []})..['Tasks'].add(payload))
@@ -290,13 +305,16 @@ void newTaskDialog (BuildContext context, [DateTime? date]) async {
 }
 
 Future<void> loadEndpointFuture (String userUrl, String token, Box<Map> storage, Box<int> refresh, String endpoint, [String? url, Map<String, dynamic>? payload]) async {
-  Result res = await query(user.get('url') ?? '', user.get('token') ?? '', url ?? endpoint, payload);
+  print([userUrl, token, url ?? endpoint, payload]);
+  Result res = await query(userUrl, token, url ?? endpoint, payload);
   if (res.isFailure) {
-    Result token = await login(user.get('url') ?? '', user.get('username') ?? '', user.get('password') ?? '');
+    print([getPassword("bakalari", "url"), getPassword("bakalari", "username"), getPassword("bakalari", "password")]);
+    Result token = await login(getPassword("bakalari", "url"), getPassword("bakalari", "username"), getPassword("bakalari", "password"));
     if (token.isFailure) {
       throw AssertionError(res.failure);
     }
     await user.put('token', token.success);
+    return;
   }
   if (res.isSuccess) {
     await Future.wait([
@@ -309,12 +327,12 @@ Future<void> loadEndpointFuture (String userUrl, String token, Box<Map> storage,
 }
 
 Future<void> loginPbFuture () async {
-  if (user.get('kleousername') == null || user.get('kleopassword') == null ) return;
-  await pb.collection('users').authWithPassword(user.get('kleousername') ?? '', user.get('kleopassword') ?? '');
+  if (!hasPassword("kleofas", "username") || !hasPassword("klefoas", "password")) return;
+  await pb.collection('users').authWithPassword(getPassword("bakalari", "username"), getPassword("bakalari", "password"));
 }
 
 Future<void> completeReloadFuture () async {
-  String url = user.get('url') ?? '';
+  String url = getPassword("bakalari", "url");
   String token = user.get('token') ?? '';
   // String zarizeni = user.get('zarizeni') ?? '3753';
   await Future.wait([

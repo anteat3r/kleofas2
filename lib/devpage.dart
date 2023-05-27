@@ -3,6 +3,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'bakalari.dart';
 import 'dart:convert';
 import 'package:result_type/result_type.dart';
+import 'storage.dart';
 
 class DevPage extends StatefulWidget{
   const DevPage({Key? key}) : super(key: key);
@@ -55,7 +56,7 @@ class _DevPageState extends State<DevPage> {
             TextButton(
               onPressed: () async {
                 Box<String> user = Hive.box<String>('user');
-                String url = user.get('url') ?? '';
+                String url = getPassword("bakalari", "url");
                 String token = user.get('token') ?? '';
                 Map raw = {};
                 if (payload.text.contains(":")) {

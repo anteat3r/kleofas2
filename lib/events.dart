@@ -12,8 +12,8 @@ AlertDialog eventDialog (Map event, BuildContext context) {
       if (event['Id'].contains('K:')) TextButton(onPressed: () {
         loadingDialog(context, () async {
           final NavigatorState navigator = Navigator.of(context);
-          if (user.get('kleousername') == null || user.get('kleopassword') == null ) return;
-          await pb.collection('users').authWithPassword(user.get('kleousername') ?? '', user.get('kleopassword') ?? '');
+          if (!hasPassword("kleofas", "username") || !hasPassword("klefoas", "password")) return;
+          await pb.collection('users').authWithPassword(getPassword("bakalari", "username"), getPassword("bakalari", "password"));
           await pb.collection('tasks').delete(event['KleoId']);
           navigator.pop(navigator);
         });

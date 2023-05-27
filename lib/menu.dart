@@ -18,10 +18,10 @@ class _MenuPageState extends State<MenuPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       loadingDialog(context, () async {
-        String zarizeni = user.get('zarizeni') ?? '';
-        String username = user.get('stravausername') ?? '';
-        String password = user.get('stravapassword') ?? '';
-        if (zarizeni.isEmpty || username.isEmpty || password.isEmpty) return;
+        if (hasPassword("strava", "zarizeni") || hasPassword("strava", "username") || hasPassword("strava", "password")) return;
+        String zarizeni = getPassword("strava", "zarizeni");
+        String username = getPassword("strava", "username");
+        String password = getPassword("strava", "password");
         cookie = await stravaLoginCookie(zarizeni, username, password);
         Map menu = await loadStravaMenu(cookie);
         await storage.put('menu', menu);

@@ -173,8 +173,8 @@ class _EventsPageState extends State<EventsPage> {
         IconButton(
           onPressed: () {
             setState(() async {
-              String cookie = await loginWebCookie(user.get('url') ?? '', user.get('username') ?? '', user.get('password') ?? '');
-              String rawHtml = await queryWeb(user.get('url') ?? '', 'Timetable/Public/Actual/Class/ZX', cookie);
+              String cookie = await loginWebCookie(getPassword("bakalari", "url"), getPassword("bakalari", "username"), getPassword("bakalari", "password"));
+              String rawHtml = await queryWeb(getPassword("bakalari", "url"), 'Timetable/Public/Actual/Class/ZX', cookie);
               var htmlDocument = parseHtmlDocument(rawHtml);
               List output = [];
               for (html.Element row in htmlDocument.querySelectorAll('.bk-timetable-row')) {
