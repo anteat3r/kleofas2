@@ -4,9 +4,9 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'bakalari.dart';
 import 'package:result_type/result_type.dart';
 import 'package:intl/intl.dart';
-// import 'package:http/http.dart';
-// import 'package:xml2json/xml2json.dart';
+import 'dart:io';
 import 'package:pocketbase/pocketbase.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 Map<String, String> ids = {"08": "0.C", "0B": "0.J", "0C": "0.M", "05": "U21", "07": "1.J", "06": "1.M", "04": "2.C", "02": "2.J", "03": "2.M", "ZZ": "3.C", "00": "3.J", "01": "3.M", "ZW": "4.C", "ZX": "4.J", "ZY": "4.M", "ZT": "5.J", "ZS": "5.M", "ZR": "6.J", "ZQ": "6.M", "ZO": "7.J", "ZM": "7.M", "ZL": "8.J", "ZK": "8.M", "UUZFR": "Balák Ondřej", "UPZEK": "Beuzon Benoit", "UTZFE": "Frimlová Klára", "UZZAQ": "Haschková Pavla", "UOZEB": "Holíková Jolana", "UZZC3": "Holubová Ivana", "UTVCG": "Hradová Pecinová Zuzana", "UWZGC": "Chvosta Petr", "UKZD6": "Jahn Vítězslav", "UZZAS": "Jirošová Štěpánka", "UVZG4": "Kirschner Věra", "UZZC5": "Kocourková Blanka", "UWZGI": "Kocúrová Zuzana", "UTZFG": "Kolářová Magdaléna", "UWZG6": "Kubelková Natálie", "UOZE5": "Loula Karel", "UWZGB": "Lukáčová Denisa", "UWZGG": "Mádlová Zdenka", "UXZGL": "Matějka Jakub", "URZEY": "Matušík Michal", "UUZFW": "Mazná Michaela", "UWZG7": "Miškovský Jakub", "UQZEQ": "Nosková Alena", "UAPP8": "Nováková Renata", "UK8S1": "Ortinská Ludmila", "UZZ9N": "Pauchová Renata", "UZZC9": "Pavel Josef", "USZFA": "Pavlousek Pavel", "U9F2I": "Pěchová Světlana", "USZF8": "Petrová Eva", "UKZD5": "Petržílka František", "ULZDF": "Plese Conor", "UWZG8": "Procházka Marek", "UKZD3": "Prokopec Michal", "UUZFV": "Radvanová Sabina", "UTZFK": "Roček Daniel", "UZZBZ": "Růžičková Lucie", "UUZFY": "Růžičková Monika", "UZZCC": "Růžičková Václava", "UZZ9X": "Semeráková Vladimíra", "UTZFM": "Skálová Zuzana", "UKZD4": "Skoupilová Petra", "UZZCL": "Stárová Martina", "UXZGK": "Stockmann Alissia", "UKZD7": "Stříbrná Leona", "UWZGA": "Suldovská Klára", "UQZEU": "Šperl Jiří", "UQZET": "Štěchová Linda", "UDZUD": "Švarcová Dagmar", "USZF6": "Tůmová Jaroslava", "UTZFD": "Valášková Andrea", "UWZGE": "Vilímová Sheila", "UWZGD": "Vincena Petr", "UVZG3": "Wangerin Torben", "UWZG9": "Wilhelm Lukáš", "UUZFP": "Yaghobová Anna", "UUZFT": "Zajíc František", "USZFC": "Zítka Martin", "Y6": "AUL", "4E": "F", "F2": "Fit", "YL": "Fl", "0D": "Chl", "C7": "I1", "RI": "I2", "NW": "TMS", "YJ": "TSO", "30": "Tv", "YM": "U1", "0W": "U10", "GZ": "U11", "1K": "U12", "N7": "U13", "YG": "U14", "YI": "U15", "YN": "U2", "N6": "U22", "PU": "U23", "LG": "U24", "Y2": "U25", "YC": "U26", "YD": "U27", "D5": "U31", "OG": "U32", "YB": "U33", "YE": "U34", "Y7": "U35", "63": "U36", "Y9": "U37", "Y8": "U38", "2D": "U41", "PZ": "U42", "68": "U43", "YF": "U44", "YO": "Zas"};
 
@@ -28,8 +28,52 @@ bool hasPassword (String key, String field) {
   return passwords.get(key)?[field]?["value"] != null;
 }
 
+Future<void> bgLoad () async {
+  final hour = DateTime.now().hour;
+  if (hour < 5 || hour > 21) return;
+  if (!(await hasNetwork())) return;
+  WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
+  await Hive.openBox<String>('user');
+  await Hive.openBox<Map>('storage');
+  await Hive.openBox<int>('refresh');
+  await Hive.openBox<Map>('passwords');
+  final oldStorage = storage.toMap();
+  await completeReloadFuture();
+  final newStorage = storage.toMap();
+  List<Map> notifsToShow = [];
+
+  // nová známka
+  final newMarksRaw = newStorage['marks']?['Subjects'] ?? [];
+  if (oldStorage["marks"] != null && newStorage["marks"] != null) {
+    final subjects = mapListToMap(newMarksRaw.map((e) => e['Subject']).toList());
+    final allOldMarks = [for (Map subject in newMarksRaw) ...subject['Marks']];
+    final allNewMarks = [for (Map subject in newStorage["Marks"]?["Subjects"] ?? []) ...subject['Marks']];
+    if (allOldMarks != allNewMarks) {
+      final changedMarks = allNewMarks.where((element) => !allOldMarks.contains(element)).toList();
+      for (final mark in changedMarks) {
+        notifsToShow.add({
+          "title": "Nová známka: ${subjects[mark['SubjectId']]?['Abbrev'] ?? '?'}",
+          "body": "${mark['Caption']}: ${mark['MarkText']} (${mark['Weight'] == null ? mark['TypeNote'] : 'váha ${mark['Weight']}'})"
+        });
+      }
+    }
+  }
+
+  if (notifsToShow.isEmpty) return;
+  final localNotifs = FlutterLocalNotificationsPlugin();
+  await localNotifs.initialize(const InitializationSettings(
+    android: AndroidInitializationSettings("@drawable/ic_launcher")
+  ));
+  for (final notif in notifsToShow) {
+    await localNotifs.show(0, notif["title"] ?? "?", notif["body"] ?? "?", const NotificationDetails(
+      android: AndroidNotificationDetails("kleofas", "Kleofáš notifikace")
+    ));
+  }
+}
+
 void loadingDialog (BuildContext context, Function func) async {
-  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('loading'),),);
+  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('loading'), duration: Duration(days: 1),),);
   try {
     await func();
   } catch (e) {
@@ -41,6 +85,15 @@ void loadingDialog (BuildContext context, Function func) async {
     });
   } finally {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
+  }
+}
+
+Future<bool> hasNetwork () async {
+  try {
+    final result = await InternetAddress.lookup('example.com');
+    return result.isNotEmpty && result.first.rawAddress.isNotEmpty;
+  } on SocketException catch (_) {
+    return false;
   }
 }
 
@@ -90,7 +143,7 @@ String czDate (String? isoTime) {
   if (isoTime == null) {
     return 'idk';
   }
-  return DateFormat('d. M. y HH:MM:ss').format(DateTime.tryParse(isoTime) ?? DateTime(69, 4, 20));
+  return DateFormat('d. M. y HH:mm:ss').format(DateTime.tryParse(isoTime) ?? DateTime(69, 4, 20));
 }
 
 Map mapListToMap (List list, {String id = 'Id'}) => {for (Map item in list) item[id]: item};
@@ -204,8 +257,8 @@ Future<void> addTask (String subject, String date, String title, String descript
     'Note': 'From Kleofáš v0.0.0',
     'DateChnged': DateTime.now().toIso8601String()
   };
-  if (!hasPassword("kleofas", "username") || !hasPassword("klefoas", "password")) return;
-  await pb.collection('users').authWithPassword(getPassword("bakalari", "username"), getPassword("bakalari", "password"));
+  if (!hasPassword("kleofas", "username") || !hasPassword("kleofas", "password")) return;
+  await pb.collection('users').authWithPassword(getPassword("kleofas", "username"), getPassword("kleofas", "password"));
   await Future.wait([
     pb.collection('tasks').create(body: {'json': jsonEncode(payload)}),
     storage.put('tasks', (storage.get('tasks') ?? {'Tasks': []})..['Tasks'].add(payload))

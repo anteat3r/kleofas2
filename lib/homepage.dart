@@ -54,6 +54,18 @@ class _HomePageState extends State<HomePage> {
           //   icon: const Icon(Icons.brunch_dining_rounded)
           // ),
           IconButton(
+            onPressed: () {
+              showDialog(context: context, builder: (context) => AlertDialog(
+                title: const Text("Error"),
+                content: SingleChildScrollView(child: Text(user.get("error") ?? ""),),
+                actions: [
+                  OutlinedButton(onPressed: () {Navigator.pop(context);}, child: const Text("Close"))
+                ],
+              ));
+            },
+            icon: const Icon(Icons.nearby_error)
+          ),
+          IconButton(
             onPressed: () {completeReload(context);},
             icon: const Icon(Icons.refresh_rounded)
           ),

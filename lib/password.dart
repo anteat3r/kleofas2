@@ -1,8 +1,5 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/material.dart';
-// import 'package:hive_flutter/hive_flutter.dart';
-import 'package:local_auth/local_auth.dart';
 import 'storage.dart';
 
 class PasswordPage extends StatefulWidget {
@@ -12,15 +9,9 @@ class PasswordPage extends StatefulWidget {
 }
 
 class _PasswordPageState extends State<PasswordPage> {
-  bool authenticated = false;
   Map<String, bool> visible = {};
   Map<String, TextEditingController> controllers = {};
   Map<dynamic, Map> localPasses = passwords.toMap();
-
-  void authenticate () async {
-    authenticated = await LocalAuthentication().authenticate(localizedReason: "Autentikuj se pls");
-    setState(() {});
-  }
 
   @override
   void initState () {
@@ -83,11 +74,6 @@ class _PasswordPageState extends State<PasswordPage> {
       });
       localPasses = passwords.toMap();
     }
-    if (Platform.isWindows) {
-      authenticated = true;
-      return;
-    }
-    authenticate();
   }
 
   @override
@@ -98,7 +84,6 @@ class _PasswordPageState extends State<PasswordPage> {
         actions: [
           IconButton(
             onPressed: () {
-              print(getPassword("bakalari", "url"));
               final removePassController = TextEditingController();
               showDialog(context: context, builder: (BuildContext context) => AlertDialog(
                 content: TextField(
@@ -153,11 +138,8 @@ class _PasswordPageState extends State<PasswordPage> {
                         .replaceAllMapped(RegExp(r'''\n\s*\$\s*(.+?)\s*:\s*(.+?)\s*\n'''), (match) => '''\n\t"${match[1]}":{"hint":"${match[2]}","secret":true},\n''')
                         .replaceAllMapped(RegExp(r''',\s*?\n\s*\}'''), (match) => '''\n}''');
                       try {
-                        print(jsonDecode(input).runtimeType);
                         localPasses.addAll(Map.from(jsonDecode(input)).map((key, value) => MapEntry(key, Map.from(value))));
-                        print("update");
                       } catch (e) {
-                        print(e);
                         return;
                       }
                       Navigator.pop(context);
@@ -175,8 +157,7 @@ class _PasswordPageState extends State<PasswordPage> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            if (!authenticated) const Text("nejsi autentikován"),
-            if (authenticated) ...localPasses.map((key, value) {
+            ...localPasses.map((key, value) {
               return MapEntry(key, value.map((key2, value2) {
                 if (value2["text"] ?? false) {
                   return MapEntry("$key:$key2", Padding(
@@ -241,7 +222,7 @@ class _PasswordPageState extends State<PasswordPage> {
                 ));
               }).values);
             }).values.expand((i) => i).toList(),
-            if (authenticated) OutlinedButton(
+            OutlinedButton(
               onPressed: () {
                 passwords.putAll(localPasses);
                 Navigator.of(context).pop();

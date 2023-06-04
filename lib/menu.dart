@@ -18,7 +18,7 @@ class _MenuPageState extends State<MenuPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       loadingDialog(context, () async {
-        if (hasPassword("strava", "zarizeni") || hasPassword("strava", "username") || hasPassword("strava", "password")) return;
+        if (!hasPassword("strava", "zarizeni") || !hasPassword("strava", "username") || !hasPassword("strava", "password")) return;
         String zarizeni = getPassword("strava", "zarizeni");
         String username = getPassword("strava", "username");
         String password = getPassword("strava", "password");
@@ -69,6 +69,9 @@ class _MenuPageState extends State<MenuPage> {
               builder: (BuildContext context, Box<Map> value, child) {
                 Map menu = value.get('menu') ?? {};
                 // print(menu);
+                if (menu.keys.isEmpty) {
+                  return const Text("empty");
+                }
                 return Column(
                   children: menu.keys.toList().sublist(0, menu.keys.length-1).map((key) {
                     Map day = menu[key];

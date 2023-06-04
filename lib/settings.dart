@@ -1,15 +1,19 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'storage.dart';
+import 'package:image_downloader/image_downloader.dart';
+import 'package:qr_bar_code_scanner_dialog/qr_bar_code_scanner_dialog.dart';
+import 'dart:io';
 
-class SettingsPage extends StatefulWidget{
+class SettingsPage extends StatefulWidget {
   const SettingsPage({Key? key}) : super(key: key);
   @override
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
-enum Gender {civilAttackHelicopter}
-enum EventType {my, all, public}
+enum Gender { civilAttackHelicopter }
+
+enum EventType { my, all, public }
 
 class _SettingsPageState extends State<SettingsPage> {
   bool passwordVisible = false;
@@ -17,9 +21,8 @@ class _SettingsPageState extends State<SettingsPage> {
   EventType eventType = EventType.my;
   String qrpath = "";
 
-
   @override
-  void initState () {
+  void initState() {
     super.initState();
     qrpath = user.get('qrpath') ?? '';
     autoreload = (user.get('autoreload') ?? '').isNotEmpty;
@@ -34,7 +37,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   @override
-  Widget build (BuildContext context) {
+  Widget build(BuildContext context) {
     AppBar appBar = AppBar(
       title: const Text('Settings'),
     );
@@ -56,7 +59,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   value: EventType.my,
                   groupValue: eventType,
                   onChanged: (EventType? value) {
-                    if (value == null ) return;
+                    if (value == null) return;
                     setState(() {
                       eventType = EventType.my;
                     });
@@ -72,7 +75,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   value: EventType.all,
                   groupValue: eventType,
                   onChanged: (EventType? value) {
-                    if (value == null ) return;
+                    if (value == null) return;
                     setState(() {
                       eventType = EventType.all;
                     });
@@ -88,7 +91,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   value: EventType.public,
                   groupValue: eventType,
                   onChanged: (EventType? value) {
-                    if (value == null ) return;
+                    if (value == null) return;
                     setState(() {
                       eventType = EventType.public;
                     });
@@ -118,26 +121,24 @@ class _SettingsPageState extends State<SettingsPage> {
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: OutlinedButton(
-                onPressed: () async {
-                  final res = await FilePicker.platform.pickFiles();
-                  if (res == null) return;
-                  qrpath = res.files.single.path ?? "";
-                },
-                child: const Text("Vybrat soubor")
-              ),
-              // child: TextField(
-              //   maxLines: 1,
-              //   controller: qrpayload,
-              //   decoration: const InputDecoration(
-              //     hintText: "payload qr kódu",
-              //     border: OutlineInputBorder(
-              //       borderSide: BorderSide(
-              //         width: 1
-              //       ),
-              //       borderRadius: BorderRadius.all(Radius.circular(10))
-              //     )
-              //   ),
-              // ),
+                  onPressed: () async {
+                    final res = await FilePicker.platform.pickFiles();
+                    if (res == null) return;
+                    qrpath = res.files.single.path ?? "";
+                  },
+                  child: const Text("Vybrat soubor")),
+            ),
+            if (Platform.isAndroid || Platform.isIOS) Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: OutlinedButton(
+                  onPressed: () {
+                    QrBarCodeScannerDialog().getScannedQrBarCode(onCode: (String? value) async {
+                      if (value == null) return;
+                      await ImageDownloader.downloadImage("http://194.233.170.207:8000/$value", destination: AndroidDestinationType.custom(directory: "kleofasqr")..subDirectory("qr.png"));
+                      await user.put("qrpath", "/storage/emulated/0/kleofasqr/qr.png");
+                    });
+                  },
+                  child: const Text("Načíst kód")),
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
@@ -157,13 +158,15 @@ class _SettingsPageState extends State<SettingsPage> {
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: OutlinedButton(
-                onPressed: () {loadingDialog(context, () async {
-                  final NavigatorState navigator = Navigator.of(context);
-                  await user.put('event_type', eventType.toString());
-                  await user.put('qrpath', qrpath);
-                  await user.put('autoreload', autoreload ? 'true' : '');
-                  navigator.pop();
-                });},
+                onPressed: () {
+                  loadingDialog(context, () async {
+                    final NavigatorState navigator = Navigator.of(context);
+                    await user.put('event_type', eventType.toString());
+                    await user.put('qrpath', qrpath);
+                    await user.put('autoreload', autoreload ? 'true' : '');
+                    navigator.pop();
+                  });
+                },
                 child: const Text('Save')
               ),
             ),
@@ -172,5 +175,4 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
     );
   }
-
 }
