@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+// import 'package:intl/intl.dart';
 import 'absence.dart';
 import 'storage.dart';
 import 'devpage.dart';
@@ -10,6 +11,7 @@ import 'menu.dart';
 import 'calendar.dart';
 import 'qr.dart';
 import 'password.dart';
+import 'library.dart';
 // import 'package:permission_handler/permission_handler.dart';
 // import 'package:hive_flutter/hive_flutter.dart';
 
@@ -38,60 +40,10 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: const Text('Main menu'),
         actions: [
-          // IconButton(
-          //   onPressed: () {
-          //     loginUser(context);
-          //     if (user.get('kleousername') == null || user.get('kleopassword') == null ) return;
-          //     loadingDialog(context, () async {await pb.collection('users').authWithPassword(user.get('kleousername') ?? '', user.get('kleopassword') ?? '');});
-          //   },
-          //   icon: const Icon(Icons.supervised_user_circle)
-          // ),
-          // IconButton(
-          //   onPressed: () async {
-          //     Map googleAuth = (await pb.collection('users').listAuthMethods()).toJson()['authProviders'][0];
-          //     pb.collection('users').authWithOAuth2('google', googleAuth['codeChallenge'], googleAuth['codeVerifier'], googleAuth['authUrl']);
-          //   },
-          //   icon: const Icon(Icons.brunch_dining_rounded)
-          // ),
-          IconButton(
-            onPressed: () {
-              showDialog(context: context, builder: (context) => AlertDialog(
-                title: const Text("Error"),
-                content: SingleChildScrollView(child: Text(user.get("error") ?? ""),),
-                actions: [
-                  OutlinedButton(onPressed: () {Navigator.pop(context);}, child: const Text("Close"))
-                ],
-              ));
-            },
-            icon: const Icon(Icons.nearby_error)
-          ),
           IconButton(
             onPressed: () {completeReload(context);},
             icon: const Icon(Icons.refresh_rounded)
           ),
-          // IconButton(
-          //   onPressed: () async {
-          //     cookie = await loginWebCookie(user.get('url') ?? '', user.get('username') ?? '', user.get('password') ?? '');
-          //   },
-          //   icon: const Icon(Icons.brunch_dining_sharp)
-          // ),
-          // IconButton(
-          //   onPressed: () async {
-          //     String html2 = await queryWeb(user.get('url') ?? '', 'Timetable/Public', cookie);
-          //     final options = RegExp(r'<\s*option\s*value="(.+)"\s*>\s*(.+)\s*<\s*\/option\s*>');
-          //     final matches = options.allMatches(html2);
-          //     final unescape = HtmlUnescape();
-          //     // print({for (final match in matches) match.group(1): unescape.convert(match.group(2) ?? '?')});
-          //   },
-          //   icon: const Icon(Icons.install_desktop_rounded)
-          // ),
-          // ValueListenableBuilder(
-          //   valueListenable: user.listenable(),
-          //   builder: (BuildContext context, Box<String> value, _) => Switch(
-          //     value: value.get('data_saving') == 'true',
-          //     onChanged: (bool newvalue) {value.put('data_saving', newvalue ? 'true' : 'false');}
-          //   )
-          // ),
         ],
       ),
       body: Column(
@@ -170,11 +122,11 @@ class _HomePageState extends State<HomePage> {
                 icon: const Icon(Icons.key_rounded,),
                 iconSize: 70,
               ),
-              // IconButton(
-              //   onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const CalendarPage()));},
-              //   icon: const Icon(Icons.calendar_month_rounded,),
-              //   iconSize: 70,
-              // ),
+              if ((user.get('kleolibrary') ?? '').isNotEmpty) IconButton(
+                onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const LibraryPage()));},
+                icon: const Icon(Icons.trolley,),
+                iconSize: 70,
+              ),
             ],
           ),
         ],

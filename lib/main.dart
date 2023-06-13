@@ -12,9 +12,14 @@ void main() async {
   await Hive.openBox<Map>('storage');
   await Hive.openBox<int>('refresh');
   await Hive.openBox<Map>('passwords');
+  await Hive.openBox<Map>('log');
   if (Platform.isAndroid || Platform.isIOS) {
     Workmanager().initialize(callbackDispatcher);
-    Workmanager().registerPeriodicTask('bgrefresh', 'backgroundRefreshing', frequency: const Duration(minutes: 15));
+    Workmanager().registerPeriodicTask(
+      'bgrefresh', 'backgroundRefreshing',
+      frequency: Duration(minutes: int.tryParse(user.get("notifdur") ?? "15") ?? 15),
+      constraints: Constraints(networkType: NetworkType.connected)
+    );
   }
   runApp(const MyApp());
 }
@@ -22,12 +27,20 @@ void main() async {
 @pragma('vm:entry-point')
 void callbackDispatcher () {
   Workmanager().executeTask((taskName, inputData) async {
+    WidgetsFlutterBinding.ensureInitialized();
+    await Hive.initFlutter();
+    await Hive.openBox<Map>('log');
+    await Hive.openBox<String>('user');
+    await Hive.openBox<Map>('storage');
+    await Hive.openBox<int>('refresh');
+    await Hive.openBox<Map>('passwords');
+    await logInfo(['bg loading started']);
     try {
       await bgLoad();
     } catch (e, s) {
-      await Hive.openBox<String>('user');
-      await user.put("error", "${user.get("error") ?? ""}${DateTime.now().toIso8601String()}: $e -> $s\n");
+      await logError(['bg loading crashed', e, s]);
     }
+    await logInfo(['bg loading finished']);
     return Future.value(true);
   });
 }

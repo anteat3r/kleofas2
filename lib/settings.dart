@@ -1,9 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'storage.dart';
-import 'package:image_downloader/image_downloader.dart';
-import 'package:qr_bar_code_scanner_dialog/qr_bar_code_scanner_dialog.dart';
-import 'dart:io';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({Key? key}) : super(key: key);
@@ -12,7 +10,6 @@ class SettingsPage extends StatefulWidget {
 }
 
 enum Gender { civilAttackHelicopter }
-
 enum EventType { my, all, public }
 
 class _SettingsPageState extends State<SettingsPage> {
@@ -20,12 +17,18 @@ class _SettingsPageState extends State<SettingsPage> {
   bool autoreload = false;
   EventType eventType = EventType.my;
   String qrpath = "";
+  TextEditingController notifdurcontroller = TextEditingController();
+  TextEditingController notifstartcontroller = TextEditingController();
+  TextEditingController notifendcontroller = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     qrpath = user.get('qrpath') ?? '';
     autoreload = (user.get('autoreload') ?? '').isNotEmpty;
+    notifdurcontroller.text = user.get("notifdur") ?? "15";
+    notifstartcontroller.text = user.get("notifstart") ?? "6";
+    notifendcontroller.text = user.get("notifend") ?? "22";
     if (user.get('event_type') == null) return;
     if (user.get('event_type') == 'EventType.my') {
       eventType = EventType.my;
@@ -128,18 +131,6 @@ class _SettingsPageState extends State<SettingsPage> {
                   },
                   child: const Text("Vybrat soubor")),
             ),
-            if (Platform.isAndroid || Platform.isIOS) Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: OutlinedButton(
-                  onPressed: () {
-                    QrBarCodeScannerDialog().getScannedQrBarCode(onCode: (String? value) async {
-                      if (value == null) return;
-                      await ImageDownloader.downloadImage("http://194.233.170.207:8000/$value", destination: AndroidDestinationType.custom(directory: "kleofasqr")..subDirectory("qr.png"));
-                      await user.put("qrpath", "/storage/emulated/0/kleofasqr/qr.png");
-                    });
-                  },
-                  child: const Text("Načíst kód")),
-            ),
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: ListTile(
@@ -155,6 +146,47 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ),
             ),
+            const Text('Notifikace'),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TextField(
+                controller: notifdurcontroller,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'doba mezi notifikacemi (minuty)',
+                ),
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              ),
+            ),
+            const Text("Čas generování notifikací (hodiny, 0 - 24)"),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: notifstartcontroller,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Text("-"),
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: TextField(
+                        controller: notifendcontroller,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: OutlinedButton(
@@ -164,6 +196,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     await user.put('event_type', eventType.toString());
                     await user.put('qrpath', qrpath);
                     await user.put('autoreload', autoreload ? 'true' : '');
+                    await user.put('notifdur', notifdurcontroller.text);
+                    await user.put('notifstart', notifstartcontroller.text);
+                    await user.put('notifend', notifendcontroller.text);
                     navigator.pop();
                   });
                 },

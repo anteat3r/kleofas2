@@ -10,8 +10,15 @@ class MenuPage extends StatefulWidget{
   State<MenuPage> createState() => _MenuPageState();
 }
 
+double? average (Iterable<int> iter) {
+  if (iter.isEmpty) return null;
+  return iter.reduce((acc, cur) => acc + cur) / iter.length;
+}
+
 class _MenuPageState extends State<MenuPage> {
   String cookie = '';
+  // Map ratings = {};
+  // int curRating = 0;
 
   @override
   void initState () {
@@ -26,6 +33,11 @@ class _MenuPageState extends State<MenuPage> {
         Map menu = await loadStravaMenu(cookie);
         await storage.put('menu', menu);
         await refresh.put('strava_cookie', DateTime.now().millisecondsSinceEpoch);
+        // final rawRatings = await pb.collection('food').getFullList();
+        // ratings = {
+        //   for (final meal in Set.from(rawRatings.map((e) => e.data['meal']))) 
+        //   meal: average(rawRatings.where((element) => element.data['meal'] == meal).map((e) => e.data['rating']))
+        // };
         setState(() {});
       });
     });
@@ -35,40 +47,15 @@ class _MenuPageState extends State<MenuPage> {
   Widget build (BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-      title: const Text('Menu'),
-      // actions: [
-      //   IconButton(
-      //     onPressed: () {
-      //       // loadingDialog(context, () async {
-      //       //   String zarizeni = user.get('zarizeni') ?? '';
-      //       //   String username = user.get('stravausername') ?? '';
-      //       //   String password = user.get('stravapassword') ?? '';
-      //       //   if (zarizeni.isEmpty || username.isEmpty || password.isEmpty) return;
-      //       //   cookie = await stravaLoginCookie(zarizeni, username, password);
-      //       //   Map menu = await loadStravaMenu(cookie);
-      //       //   await storage.put('menu', menu);
-      //       //   setState(() {});
-      //       // });
-      //       print(storage.get('menu'));
-      //     },
-      //     icon: const Icon(Icons.send_rounded)
-      //   ),
-      // ],
-    ),
+        title: const Text('Menu'),
+      ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // ValueListenableBuilder(
-            //   valueListenable: refresh.listenable(),
-            //   builder: (BuildContext context, Box<int> value, child) {
-            //     return Text(czDate(DateTime.fromMillisecondsSinceEpoch(value.get('menu') ?? 0).toString()));
-            //   }
-            // ),
             ValueListenableBuilder(
               valueListenable: storage.listenable(),
               builder: (BuildContext context, Box<Map> value, child) {
                 Map menu = value.get('menu') ?? {};
-                // print(menu);
                 if (menu.keys.isEmpty) {
                   return const Text("empty");
                 }
@@ -101,7 +88,6 @@ class _MenuPageState extends State<MenuPage> {
                                   if (day['soup'] != day['first']['title']) Padding(
                                     padding: const EdgeInsets.only(right: 8.0),
                                     child: Checkbox(
-                                      // fillColor: day['enabled'] ? null : const MaterialStatePropertyAll(Colors.grey),
                                       value: day['first']['ordered'],
                                       onChanged: (bool? newvalue) {
                                         if (!day['enabled']) return;
@@ -141,7 +127,6 @@ class _MenuPageState extends State<MenuPage> {
                                     padding: const EdgeInsets.only(right: 8.0),
                                     child: Checkbox(
                                       value: day['second']['ordered'],
-                                      // fillColor: day['enabled'] ? null : const MaterialStatePropertyAll(Colors.grey),
                                       onChanged: (bool? newvalue) {
                                         if (!day['enabled']) return;
                                         if (newvalue == null) return;

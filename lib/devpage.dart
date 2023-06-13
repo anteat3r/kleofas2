@@ -27,6 +27,7 @@ class _DevPageState extends State<DevPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            SingleChildScrollView(scrollDirection: Axis.horizontal, child: Text(const JsonEncoder.withIndent('    ').convert(log.toMap()))),
             TextField(
               maxLines: 1,
               controller: endpoint,
