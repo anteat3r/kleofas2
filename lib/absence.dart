@@ -9,6 +9,13 @@ class AbsencePage extends StatefulWidget{
   State<AbsencePage> createState() => _AbsencePageState();
 }
 
+DateTime roundDateTime (DateTime date) {
+  if (date.hour > 12) {
+    return DateTime(date.year, date.month, date.day + 1);
+  }
+  return date;
+}
+
 class _AbsencePageState extends State<AbsencePage> {
   final List<String> czWeekDayNames = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'];
 

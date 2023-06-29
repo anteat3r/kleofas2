@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-// import 'package:intl/intl.dart';
 import 'absence.dart';
 import 'storage.dart';
 import 'devpage.dart';
@@ -12,8 +11,7 @@ import 'calendar.dart';
 import 'qr.dart';
 import 'password.dart';
 import 'library.dart';
-// import 'package:permission_handler/permission_handler.dart';
-// import 'package:hive_flutter/hive_flutter.dart';
+import 'drawing.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -98,8 +96,8 @@ class _HomePageState extends State<HomePage> {
                 iconSize: 70,
               ),
               IconButton(
-                onPressed: () {newTaskDialog(context);},
-                icon: const Icon(Icons.add_box_outlined,),
+                onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const DrawingPage()));},
+                icon: const Icon(Icons.draw,),
                 iconSize: 70,
               ),
               IconButton(

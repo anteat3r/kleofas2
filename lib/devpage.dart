@@ -21,13 +21,19 @@ class _DevPageState extends State<DevPage> {
   Widget build (BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Query")
+        title: const Text("Query"),
+        actions: [
+          IconButton(onPressed: () {
+            loadingDialog(context, () async {
+              await log.clear();
+            });
+          }, icon: const Icon(Icons.cleaning_services)),
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SingleChildScrollView(scrollDirection: Axis.horizontal, child: Text(const JsonEncoder.withIndent('    ').convert(log.toMap()))),
             TextField(
               maxLines: 1,
               controller: endpoint,
@@ -82,7 +88,8 @@ class _DevPageState extends State<DevPage> {
                   output,
                   textAlign: TextAlign.left,
                 )
-            )
+            ),
+            SingleChildScrollView(scrollDirection: Axis.horizontal, child: Text(const JsonEncoder.withIndent('   ').convert(log.toMap().values.toList()))),
           ]
         ),
       ),

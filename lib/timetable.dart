@@ -5,6 +5,13 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'storage.dart';
 import 'package:intl/intl.dart';
 
+DateTime roundDateTime (DateTime date) {
+  if (date.hour > 12) {
+    return DateTime(date.year, date.month, date.day + 1);
+  }
+  return date;
+}
+
 class TimetablePage extends StatefulWidget{
   const TimetablePage({Key? key}) : super(key: key);
   @override
@@ -132,9 +139,7 @@ class _TimetablePageState extends State<TimetablePage> {
           backgroundColor: MaterialStatePropertyAll(
             hour?['Change'] != null
             ? ( hour?['Change']?['TypeAbbrev'] == null
-              ? ( hour == null || hour['TeacherId'] == null
-                ? Colors.indigo.shade800
-                : Colors.lightBlue )
+              ? Colors.lightBlue
               : Colors.lightBlue.shade600 )
             : hour == null || hour['TeacherId'] == null
               ? const Color.fromARGB(255, 48, 48, 48)

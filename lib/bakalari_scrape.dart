@@ -9,6 +9,13 @@ import 'package:universal_html/parsing.dart';
 import 'package:universal_html/html.dart' as html;
 import 'dart:convert';
 
+DateTime roundDateTime (DateTime date) {
+  if (date.hour > 12) {
+    return DateTime(date.year, date.month, date.day + 1);
+  }
+  return date;
+}
+
 class EventsPage extends StatefulWidget {
   const EventsPage({Key? key}) : super(key: key);
   @override

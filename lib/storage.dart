@@ -21,14 +21,37 @@ dynamic getListDefault (List inputList, int idx, [dynamic default_]) {
   return inputList[idx];
 }
 
+DateTime roundDateTime (DateTime date) {
+  if (date.hour > 12) {
+    return DateTime(date.year, date.month, date.day + 1);
+  }
+  return date;
+}
+
 Map<String, String> ids = {"08": "0.C", "0B": "0.J", "0C": "0.M", "05": "U21", "07": "1.J", "06": "1.M", "04": "2.C", "02": "2.J", "03": "2.M", "ZZ": "3.C", "00": "3.J", "01": "3.M", "ZW": "4.C", "ZX": "4.J", "ZY": "4.M", "ZT": "5.J", "ZS": "5.M", "ZR": "6.J", "ZQ": "6.M", "ZO": "7.J", "ZM": "7.M", "ZL": "8.J", "ZK": "8.M", "UUZFR": "Balák Ondřej", "UPZEK": "Beuzon Benoit", "UTZFE": "Frimlová Klára", "UZZAQ": "Haschková Pavla", "UOZEB": "Holíková Jolana", "UZZC3": "Holubová Ivana", "UTVCG": "Hradová Pecinová Zuzana", "UWZGC": "Chvosta Petr", "UKZD6": "Jahn Vítězslav", "UZZAS": "Jirošová Štěpánka", "UVZG4": "Kirschner Věra", "UZZC5": "Kocourková Blanka", "UWZGI": "Kocúrová Zuzana", "UTZFG": "Kolářová Magdaléna", "UWZG6": "Kubelková Natálie", "UOZE5": "Loula Karel", "UWZGB": "Lukáčová Denisa", "UWZGG": "Mádlová Zdenka", "UXZGL": "Matějka Jakub", "URZEY": "Matušík Michal", "UUZFW": "Mazná Michaela", "UWZG7": "Miškovský Jakub", "UQZEQ": "Nosková Alena", "UAPP8": "Nováková Renata", "UK8S1": "Ortinská Ludmila", "UZZ9N": "Pauchová Renata", "UZZC9": "Pavel Josef", "USZFA": "Pavlousek Pavel", "U9F2I": "Pěchová Světlana", "USZF8": "Petrová Eva", "UKZD5": "Petržílka František", "ULZDF": "Plese Conor", "UWZG8": "Procházka Marek", "UKZD3": "Prokopec Michal", "UUZFV": "Radvanová Sabina", "UTZFK": "Roček Daniel", "UZZBZ": "Růžičková Lucie", "UUZFY": "Růžičková Monika", "UZZCC": "Růžičková Václava", "UZZ9X": "Semeráková Vladimíra", "UTZFM": "Skálová Zuzana", "UKZD4": "Skoupilová Petra", "UZZCL": "Stárová Martina", "UXZGK": "Stockmann Alissia", "UKZD7": "Stříbrná Leona", "UWZGA": "Suldovská Klára", "UQZEU": "Šperl Jiří", "UQZET": "Štěchová Linda", "UDZUD": "Švarcová Dagmar", "USZF6": "Tůmová Jaroslava", "UTZFD": "Valášková Andrea", "UWZGE": "Vilímová Sheila", "UWZGD": "Vincena Petr", "UVZG3": "Wangerin Torben", "UWZG9": "Wilhelm Lukáš", "UUZFP": "Yaghobová Anna", "UUZFT": "Zajíc František", "USZFC": "Zítka Martin", "Y6": "AUL", "4E": "F", "F2": "Fit", "YL": "Fl", "0D": "Chl", "C7": "I1", "RI": "I2", "NW": "TMS", "YJ": "TSO", "30": "Tv", "YM": "U1", "0W": "U10", "GZ": "U11", "1K": "U12", "N7": "U13", "YG": "U14", "YI": "U15", "YN": "U2", "N6": "U22", "PU": "U23", "LG": "U24", "Y2": "U25", "YC": "U26", "YD": "U27", "D5": "U31", "OG": "U32", "YB": "U33", "YE": "U34", "Y7": "U35", "63": "U36", "Y9": "U37", "Y8": "U38", "2D": "U41", "PZ": "U42", "68": "U43", "YF": "U44", "YO": "Zas"};
 
-final pb = PocketBase('http://kleofas.eu:4200'); 
+final pb = PocketBase('https://kleofas.eu/pb'); 
 Box<Map> storage = Hive.box<Map>('storage');
 Box<String> user = Hive.box<String>('user');
 Box<int> refresh = Hive.box<int>('refresh');
 Box<Map> passwords = Hive.box<Map>('passwords');
 Box<Map> log = Hive.box<Map>('log');
+
+dynamic jsonify (dynamic object) {
+  if (object.toString().contains('{')) {
+    return (object as Map).map((key, value) => MapEntry(jsonify(key), jsonify(value)));
+  }
+  if (object.toString().contains('[')) {
+    return (object as List).map((element) => jsonify(element));
+  }
+  if (object.runtimeType == int || object.runtimeType == double) {
+    return object.toString();
+  }
+  if (object.runtimeType == String) {
+    return '"$object"';
+  }
+  return '<$object>';
+}
 
 Future<void> logInfo (List data) async {
   await log.add({
@@ -59,10 +82,10 @@ bool hasPassword (String key, String field) {
 }
 
 Future<void> bgLoad () async {
-  logInfo(['notifkace bgload start']);
   final hour = DateTime.now().hour;
   if (hour < (int.tryParse(user.get("notifstart") ?? "6") ?? 6) || hour > (int.tryParse(user.get("notifend") ?? "22") ?? 22)) return;
   final oldStorage = storage.toMap();
+  logInfo(['notifkace bgload start']);
   await completeReloadFuture();
   final newStorage = storage.toMap();
   List<SimpleNotif> notifsToShow = [];
@@ -70,19 +93,19 @@ Future<void> bgLoad () async {
   // nová známka
   final newMarksRaw = newStorage['marks']?['Subjects'] ?? [];
   if (oldStorage["marks"] != null && newStorage["marks"] != null) {
-  final subjects = mapListToMap(newMarksRaw.map((e) => e['Subject']).toList());
-  final allOldMarks = [for (Map subject in newMarksRaw) ...subject['Marks']];
-  final allNewMarks = [for (Map subject in newStorage["Marks"]?["Subjects"] ?? []) ...subject['Marks']];
-  if (allOldMarks != allNewMarks) {
-    final changedMarks = allNewMarks.where((element) => !allOldMarks.contains(element)).toList();
+    final subjects = mapListToMap(newMarksRaw.map((e) => e['Subject']).toList());
+    final allOldMarks = [for (Map subject in newMarksRaw) ...subject['Marks']];
+    final allNewMarks = [for (Map subject in newStorage["Marks"]?["Subjects"] ?? []) ...subject['Marks']];
+    final changedMarks = allNewMarks.where((element) => allOldMarks.map((e) => e.toString()).contains(element.toString())).toList();
+    // logInfo(['checkování známek', allOldMarks, allNewMarks]);
+    logInfo(['změněné známky', changedMarks]);
     for (final mark in changedMarks) {
-      logInfo(['notifikace nová známka detekována', allOldMarks, allNewMarks, mark]);
+      logInfo(['notifikace nová známka detekována', mark]);
       notifsToShow.add(SimpleNotif(
         "Nová známka: ${subjects[mark['SubjectId']]?['Abbrev'] ?? '?'}",
         "${mark['Caption']}: ${mark['MarkText']} (${mark['Weight'] == null ? mark['TypeNote'] : 'váha ${mark['Weight']}'})"
       ));
     }
-  }
   }
 
   // změna rozvrhu
@@ -92,10 +115,10 @@ Future<void> bgLoad () async {
   for (int i = 0; i < max(oldDays.length, newDays.length); i++) {
     final oldDay = oldDays[i];
     final newDay = newDays[i];
-    if (oldDay != newDay) {
-      logInfo(['notifikace změna rozvrhu detekována', oldDay, newDay, oldDays, newDays]);
+    if (jsonEncode(oldDay).compareTo(jsonEncode(newDay)) != 0) {
+      logInfo(['notifikace změna rozvrhu detekována', jsonEncode(oldDay), jsonEncode(newDay)]);
       notifsToShow.add(SimpleNotif(
-        "změna rozvrhu ${czWeekDayNames[i]}"
+        "změna rozvrhu ${newDay['DayOfWeek']}"
       ));
       // List<Map> dayChanges = [];
       // final List oldAtoms = oldDay["Atoms"];
@@ -119,7 +142,7 @@ Future<void> bgLoad () async {
     if (absence["Unsolved"] > 0 || absence["Missed"] > 0 || absence["Late"] > 0 || absence["Soon"] > 0) {
       logInfo(['notifikace neomluvená absence detekována', absence, absences]);
       notifsToShow.add(SimpleNotif(
-        "neomluvená absence ${DateFormat('EEE d. M.').format(DateTime.tryParse(absence["Date"] ?? "") ?? DateTime(1969))}"
+        "neomluvená absence ${DateFormat('EEE d. M.').format(roundDateTime(DateTime.tryParse(absence["Date"] ?? "") ?? DateTime(1969)))}"
       ));
     }
   }
