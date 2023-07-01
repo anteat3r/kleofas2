@@ -189,9 +189,9 @@ class _LibraryPageState extends State<LibraryPage> {
                                     if (res == null) return;
                                     final path = res.files.single.path;
                                     if (path == null) return;
-                                    print(await pb.collection('library').update(article.id, files: [
+                                    await pb.collection('library').update(article.id, files: [
                                       http.MultipartFile.fromBytes('file', await File(path).readAsBytes(), filename: path.split('/').last)
-                                    ]));
+                                    ]);
                                     setState(() {});
                                   });
                                 },
