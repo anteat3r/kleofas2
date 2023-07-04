@@ -24,7 +24,7 @@ class _MenuPageState extends State<MenuPage> {
   void initState () {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      loadingDialog(context, () async {
+      loadingSnack(() async {
         if (!hasPassword("strava", "zarizeni") || !hasPassword("strava", "username") || !hasPassword("strava", "password")) return;
         String zarizeni = getPassword("strava", "zarizeni");
         String username = getPassword("strava", "username");
@@ -94,7 +94,7 @@ class _MenuPageState extends State<MenuPage> {
                                         if (newvalue == null) return;
                                         setState(() {
                                           if (day['first']['ordered']) {
-                                            loadingDialog(context, () async {
+                                            loadingSnack(() async {
                                               await setLunch(cookie, day['first']['veta'], 0);
                                               await submitLunches(cookie);
                                               setState(() {
@@ -102,7 +102,7 @@ class _MenuPageState extends State<MenuPage> {
                                               });
                                             });
                                           } else {
-                                            loadingDialog(context, () async {
+                                            loadingSnack(() async {
                                               await setLunch(cookie, day['first']['veta'], 1);
                                               await submitLunches(cookie);
                                               setState(() {
@@ -132,7 +132,7 @@ class _MenuPageState extends State<MenuPage> {
                                         if (newvalue == null) return;
                                         setState(() {
                                           if (day['second']['ordered']) {
-                                            loadingDialog(context, () async {
+                                            loadingSnack( () async {
                                               await setLunch(cookie, day['second']['veta'], 0);
                                               await submitLunches(cookie);
                                               setState(() {
@@ -140,7 +140,7 @@ class _MenuPageState extends State<MenuPage> {
                                               });
                                             });
                                           } else {
-                                            loadingDialog(context, () async {
+                                            loadingSnack( () async {
                                               await setLunch(cookie, day['second']['veta'], 1);
                                               await submitLunches(cookie);
                                               setState(() {

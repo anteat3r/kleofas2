@@ -27,15 +27,13 @@ class _AbsencePageState extends State<AbsencePage> {
         actions: [
           IconButton(
             onPressed: () {
-              setState(() {
-                loadEndpoint(context, 'absence', 'absence/student');
-              });
+              setState(() { loadEndpointSnack('absence', 'absence/student'); });
             },
             icon: const Icon(Icons.refresh_rounded)
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: loadScrollSnacksWrapper(context, 
         child: Column(
           children: [
             ValueListenableBuilder(

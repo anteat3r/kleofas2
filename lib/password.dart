@@ -154,7 +154,7 @@ class _PasswordPageState extends State<PasswordPage> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: loadScrollSnacksWrapper(context,
         child: Column(
           children: [
             ...localPasses.map((key, value) {

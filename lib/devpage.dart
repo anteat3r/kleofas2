@@ -24,13 +24,13 @@ class _DevPageState extends State<DevPage> {
         title: const Text("Query"),
         actions: [
           IconButton(onPressed: () {
-            loadingDialog(context, () async {
+            loadingSnack( () async {
               await log.clear();
             });
           }, icon: const Icon(Icons.cleaning_services)),
         ],
       ),
-      body: SingleChildScrollView(
+      body: loadScrollSnacksWrapper(context,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

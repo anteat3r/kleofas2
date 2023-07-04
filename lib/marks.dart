@@ -21,9 +21,7 @@ class _MarksPageState extends State<MarksPage> {
       actions: [
         IconButton(
           onPressed: () {
-            setState(() {
-              loadEndpoint(context, 'marks');
-            });
+            setState(() { loadEndpointSnack('marks'); });
           },
           icon: const Icon(Icons.refresh_rounded)
         ),
@@ -31,7 +29,7 @@ class _MarksPageState extends State<MarksPage> {
     );
     return Scaffold(
       appBar: appBar,
-      body: SingleChildScrollView(
+      body: loadScrollSnacksWrapper(context,
         child: Column(
           children: [
             ValueListenableBuilder(
@@ -57,7 +55,7 @@ class _MarksPageState extends State<MarksPage> {
                         child: OutlinedButton(
                           style: ButtonStyle(
                             textStyle: MaterialStatePropertyAll(TextStyle(foreground: Paint()..color = Colors.white)),
-                            backgroundColor: MaterialStatePropertyAll(currentSubject == subjectMarks['Subject']['Id'] ? Colors.amber.shade600 : Colors.transparent),
+                            backgroundColor: MaterialStatePropertyAll(currentSubject == subjectMarks['Subject']['Id'] ? Colors.lightBlue.shade600 : Colors.transparent),
                           ),
                           onPressed: () {
                             setState(() {

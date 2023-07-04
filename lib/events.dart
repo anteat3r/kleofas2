@@ -10,7 +10,7 @@ AlertDialog eventDialog (Map event, BuildContext context) {
     content: SingleChildScrollView(child: Text('Title: ${event["Title"]}\nDescription: ${event["Description"]}\nEvent Type:\n\tAbbrev: ${event["EventType"]["Abbrev"]}\n\tName: ${event["EventType"]["Name"]}\nNote: ${event["Note"]}\nDate Changed: ${czDate(event["DateChanged"])}\nTimes:${event["Times"].map((e) => "\n\tTime:\n\t\tWhole Day: ${e['WholeDay']}\n\t\tStart Time: ${czDate(e['StartTime'])}\n\t\tEnd Time: ${czDate(e['EndTime'])}\n\t\tInterval Start Time: ${czDate(e['IntervalStartTime'])}\n\t\tInterval End Time: ${czDate(e['IntervalEndTime'])}").join("\n\t")}\nClasses:${event["Classes"].map((e) => "\n\tClass:\n\t\tAbbrev: ${e['Abbrev']}\n\t\tName: ${e['Name']}").join("\n\t")}\nClass Sets: TODO\nTeachers:${event["Teachers"].map((e) => "\n\tTeacher:\n\t\tAbbrev: ${e['Abbrev']}\n\t\tName: ${e['Name']}").join("\n\t")}\nTeacher Sets: TODO\nRooms:${event["Rooms"].map((e) => "\n\tRoom:\n\t\tAbbrev: ${e['Abbrev']}\n\t\tName: ${e['Name']}").join("\n\t")}\nRoom Sets: TODO\nStudents:${event["Students"].map((e) => "\n\tName: ${e['Name']}").join("\n\t")}')),
     actions: [
       if (event['Id'].contains('K:')) TextButton(onPressed: () {
-        loadingDialog(context, () async {
+        loadingSnack( () async {
           final NavigatorState navigator = Navigator.of(context);
           if (!hasPassword("kleofas", "username") || !hasPassword("klefoas", "password")) return;
           await pb.collection('users').authWithPassword(getPassword("bakalari", "username"), getPassword("bakalari", "password"));
@@ -48,16 +48,14 @@ class _EventsPageState extends State<EventsPage> {
         IconButton(
           onPressed: () {
             setState(() {
-              loadTasks(context);
+              loadingSnack(() async {await loadTasks();});
             });
           },
           icon: const Icon(Icons.task_rounded)
         ),
         IconButton(
           onPressed: () {
-            setState(() {
-              loadEndpoint(context, 'events', 'events/${user.get('event_type')?.split(".")[1] ?? "my"}');
-            });
+            setState(() { loadEndpointSnack('events', 'events/${user.get('event_type')?.split(".")[1] ?? "my"}'); });
           },
           icon: const Icon(Icons.refresh_rounded)
         ),
@@ -65,7 +63,7 @@ class _EventsPageState extends State<EventsPage> {
     );
     return Scaffold(
       appBar: appBar,
-      body: SingleChildScrollView(
+      body: loadScrollSnacksWrapper(context,
         child: Column(
           children: [
             ValueListenableBuilder(

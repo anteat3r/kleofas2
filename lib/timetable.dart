@@ -19,7 +19,7 @@ class TimetablePage extends StatefulWidget{
 }
 
 class _TimetablePageState extends State<TimetablePage> {
-  int weeksOffset = 0;
+  DateTime curDate = DateTime.now();
   final List<String> czWeekDayNames = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'];
 
   Widget hourTitleCell (Map hour, double maxHeight) {
@@ -176,39 +176,33 @@ class _TimetablePageState extends State<TimetablePage> {
     AppBar appBar = AppBar(
       title: const Text('Timetable'),
       actions: [
-        /*IconButton(
-          onPressed: () {
-            weeksOffset -= 1;
-            setState(() {
-              loadEndpoint(context, 'timetable', 'timetable/actual', {'date': DateFormat('yyyy-MM-dd').format(DateTime.now().add(Duration(days: 7 * weeksOffset)))});
-            });
+        IconButton(
+          onPressed: () async {
+            final pickedDate = await showDatePicker(context: context, initialDate: curDate, firstDate: DateTime(1969), lastDate: DateTime(2069));
+            if (pickedDate == null) return;
+            curDate = pickedDate;
+            setState(() { loadEndpointSnack('timetable', 'timetable/actual', {'date': DateFormat('yyyy-MM-dd').format(curDate)}); });
           },
-          icon: const Icon(Icons.curtains_rounded)
-        ),*/
+          icon: const Icon(Icons.date_range)
+        ),
         IconButton(
           onPressed: () {
-            weeksOffset -= 1;
-            setState(() {
-              loadEndpoint(context, 'timetable', 'timetable/actual', {'date': DateFormat('yyyy-MM-dd').format(DateTime.now().add(Duration(days: 7 * weeksOffset)))});
-            });
+            curDate = curDate.subtract(const Duration(days: 7));
+            setState(() { loadEndpointSnack('timetable', 'timetable/actual', {'date': DateFormat('yyyy-MM-dd').format(curDate)}); });
           },
           icon: const Icon(Icons.arrow_left_rounded)
         ),
         IconButton(
           onPressed: () {
-            setState(() {
-              weeksOffset = 0;
-              loadEndpoint(context, 'timetable', 'timetable/actual');
-            });
+              curDate = DateTime.now();
+            setState(() { loadEndpointSnack('timetable', 'timetable/actual'); });
           },
           icon: const Icon(Icons.refresh_rounded)
         ),
         IconButton(
           onPressed: () {
-            weeksOffset += 1;
-            setState(() {
-              loadEndpoint(context, 'timetable', 'timetable/actual', {'date': DateFormat('yyyy-MM-dd').format(DateTime.now().add(Duration(days: 7 * weeksOffset)))});
-            });
+            curDate = curDate.add(const Duration(days: 7));
+            setState(() { loadEndpointSnack('timetable', 'timetable/actual', {'date': DateFormat('yyyy-MM-dd').format(curDate)}); });
           },
           icon: const Icon(Icons.arrow_right_rounded)
         ),
@@ -217,63 +211,65 @@ class _TimetablePageState extends State<TimetablePage> {
     double maxHeight = MediaQuery.of(context).size.height - appBar.preferredSize.height - MediaQuery.of(context).padding.top - 19;
     return Scaffold(
       appBar: appBar,
-      body: Column(
-        children: [
-          ValueListenableBuilder(
-            valueListenable: refresh.listenable(),
-            builder: (BuildContext context, Box<int> value, child) {
-              return Text(czDate(DateTime.fromMillisecondsSinceEpoch(value.get('timetable') ?? 0).toString()));
-            }
-          ),
-          ValueListenableBuilder(
-            valueListenable: storage.listenable(),
-            builder: (BuildContext context, Box<Map> value, child) {
-              List getElem (String name) => value.get('timetable')?[name] ?? [];
-              List hours = getElem('Hours');
-              List days = getElem('Days');
-              hours = hours.sublist(max(0, hours.indexWhere((element) => days.any((day) => day['Atoms'].any((atom) => atom['HourId'] == element['Id'])))), hours.lastIndexWhere((element) => days.any((day) => day['Atoms'].any((atom) => atom['HourId'] == element['Id']))) + 1);
-              Map groups = mapListToMap(getElem('Groups'));
-              Map subjects = mapListToMap(getElem('Subjects'));
-              Map teachers = mapListToMap(getElem('Teachers'));
-              Map rooms = mapListToMap(getElem('Rooms'));
-              return SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: SizedBox(
-                  width: hours.length * 100,
-                  child: Table(
-                    children: [
-                      TableRow(
-                        children: 
-                          [
-                            const TableCell(child: Text("")),
-                            ...List.generate(
-                              hours.length, (index) {
-                                return hourTitleCell(hours[index], maxHeight);
-                              }
-                            )
-                          ],
-                      ),
-                      ...List.generate(
-                        days.length, (index) {
-                          return TableRow(
-                            children: [
-                              dayCell(days[index], maxHeight),
+      body: loadScrollSnacksWrapper(context,
+        child: Column(
+          children: [
+            ValueListenableBuilder(
+              valueListenable: refresh.listenable(),
+              builder: (BuildContext context, Box<int> value, child) {
+                return Text(czDate(DateTime.fromMillisecondsSinceEpoch(value.get('timetable') ?? 0).toString()));
+              }
+            ),
+            ValueListenableBuilder(
+              valueListenable: storage.listenable(),
+              builder: (BuildContext context, Box<Map> value, child) {
+                List getElem (String name) => value.get('timetable')?[name] ?? [];
+                List hours = getElem('Hours');
+                List days = getElem('Days');
+                hours = hours.sublist(max(0, hours.indexWhere((element) => days.any((day) => day['Atoms'].any((atom) => atom['HourId'] == element['Id'])))), hours.lastIndexWhere((element) => days.any((day) => day['Atoms'].any((atom) => atom['HourId'] == element['Id']))) + 1);
+                Map groups = mapListToMap(getElem('Groups'));
+                Map subjects = mapListToMap(getElem('Subjects'));
+                Map teachers = mapListToMap(getElem('Teachers'));
+                Map rooms = mapListToMap(getElem('Rooms'));
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: hours.length * 100,
+                    child: Table(
+                      children: [
+                        TableRow(
+                          children: 
+                            [
+                              const TableCell(child: Text("")),
                               ...List.generate(
-                                hours.length, (index2) {
-                                  return hourCell(mapListToMap(days[index]['Atoms'], id: 'HourId')[hours[index2]['Id']], maxHeight, subjects, rooms, teachers, groups);
+                                hours.length, (index) {
+                                  return hourTitleCell(hours[index], maxHeight);
                                 }
                               )
                             ],
-                          );
-                        }
-                      )
-                    ],
+                        ),
+                        ...List.generate(
+                          days.length, (index) {
+                            return TableRow(
+                              children: [
+                                dayCell(days[index], maxHeight),
+                                ...List.generate(
+                                  hours.length, (index2) {
+                                    return hourCell(mapListToMap(days[index]['Atoms'], id: 'HourId')[hours[index2]['Id']], maxHeight, subjects, rooms, teachers, groups);
+                                  }
+                                )
+                              ],
+                            );
+                          }
+                        )
+                      ],
+                    ),
                   ),
-                ),
-              );
-            }
-          )
-        ],
+                );
+              }
+            )
+          ],
+        ),
       ),
     );
   }

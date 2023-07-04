@@ -20,14 +20,13 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  String cookie = '';
 
   @override
   void initState () {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       if ((user.get("autoreload") ?? "").isNotEmpty) {
-        completeReload(context);
+        completeReloadSnack();
       }
     });
   }
@@ -37,97 +36,108 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Main menu'),
-        actions: [
+        actions: const [
           IconButton(
-            onPressed: () {completeReload(context);},
-            icon: const Icon(Icons.refresh_rounded)
+            onPressed: completeReloadSnack,
+            icon: Icon(Icons.refresh_rounded)
           ),
+          // IconButton(
+          //   onPressed: () async {
+          //   },
+          //   icon: const Icon(Icons.ac_unit_rounded),
+          // ),
         ],
       ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: <Row>[
-          Row(
+      body: loadScrollSnacksWrapper(context,
+      scrollable: false,
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height,
+          child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: <IconButton>[
-              IconButton(
-                onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const DevPage()));},
-                icon: const Icon(Icons.terminal_rounded,),
-                iconSize: 70,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: <IconButton>[
+                  IconButton(
+                    onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const DevPage()));},
+                    icon: const Icon(Icons.terminal_rounded,),
+                    iconSize: 70,
+                  ),
+                  IconButton(
+                    onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const TimetablePage()));},
+                    icon: const Icon(Icons.grid_on_outlined,),
+                    iconSize: 70,
+                  ),
+                  IconButton(
+                    onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const AbsencePage()));},
+                    icon: const Icon(Icons.account_box_rounded,),
+                    iconSize: 70,
+                  ),
+                ],
               ),
-              IconButton(
-                onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const TimetablePage()));},
-                icon: const Icon(Icons.grid_on_outlined,),
-                iconSize: 70,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: <IconButton>[
+                  IconButton(
+                    onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const MarksPage()));},
+                    icon: const Icon(Icons.onetwothree_rounded,),
+                    iconSize: 70,
+                  ),
+                  IconButton(
+                    onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsPage()));},
+                    icon: const Icon(Icons.settings,),
+                    iconSize: 70,
+                  ),
+                  IconButton(
+                    onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const EventsPage()));},
+                    icon: const Icon(Icons.event,),
+                    iconSize: 70,
+                  ),
+                ],
               ),
-              IconButton(
-                onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const AbsencePage()));},
-                icon: const Icon(Icons.account_box_rounded,),
-                iconSize: 70,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: <IconButton>[
+                  IconButton(
+                    onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const MenuPage()));},
+                    icon: const Icon(Icons.soup_kitchen_outlined,),
+                    iconSize: 70,
+                  ),
+                  IconButton(
+                    onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const DrawingPage()));},
+                    icon: const Icon(Icons.draw,),
+                    iconSize: 70,
+                  ),
+                  IconButton(
+                    onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const CalendarPage()));},
+                    icon: const Icon(Icons.calendar_month_rounded,),
+                    iconSize: 70,
+                  ),
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: <IconButton>[
+                  IconButton(
+                    onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const QrPage()));},
+                    icon: const Icon(Icons.qr_code_2_rounded,),
+                    iconSize: 70,
+                  ),
+                  IconButton(
+                    onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const PasswordPage()));},
+                    icon: const Icon(Icons.key_rounded,),
+                    iconSize: 70,
+                  ),
+                  if ((user.get('kleolibrary') ?? '').isNotEmpty) IconButton(
+                    onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const LibraryPage()));},
+                    icon: const Icon(Icons.trolley,),
+                    iconSize: 70,
+                  ),
+                ],
               ),
             ],
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: <IconButton>[
-              IconButton(
-                onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const MarksPage()));},
-                icon: const Icon(Icons.onetwothree_rounded,),
-                iconSize: 70,
-              ),
-              IconButton(
-                onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsPage()));},
-                icon: const Icon(Icons.settings,),
-                iconSize: 70,
-              ),
-              IconButton(
-                onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const EventsPage()));},
-                icon: const Icon(Icons.event,),
-                iconSize: 70,
-              ),
-            ],
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: <IconButton>[
-              IconButton(
-                onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const MenuPage()));},
-                icon: const Icon(Icons.soup_kitchen_outlined,),
-                iconSize: 70,
-              ),
-              IconButton(
-                onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const DrawingPage()));},
-                icon: const Icon(Icons.draw,),
-                iconSize: 70,
-              ),
-              IconButton(
-                onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const CalendarPage()));},
-                icon: const Icon(Icons.calendar_month_rounded,),
-                iconSize: 70,
-              ),
-            ],
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: <IconButton>[
-              IconButton(
-                onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const QrPage()));},
-                icon: const Icon(Icons.qr_code_2_rounded,),
-                iconSize: 70,
-              ),
-              IconButton(
-                onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const PasswordPage()));},
-                icon: const Icon(Icons.key_rounded,),
-                iconSize: 70,
-              ),
-              if ((user.get('kleolibrary') ?? '').isNotEmpty) IconButton(
-                onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const LibraryPage()));},
-                icon: const Icon(Icons.trolley,),
-                iconSize: 70,
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }

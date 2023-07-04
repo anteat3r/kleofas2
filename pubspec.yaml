@@ -25,6 +25,7 @@ dependencies:
   url_launcher: ^6.1.11
   flutter_colorpicker: ^1.0.3
   vector_math: ^2.1.4
+  multi_snackbar: ^2.0.0
 
 dev_dependencies:
   flutter_test:

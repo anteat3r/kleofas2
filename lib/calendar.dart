@@ -44,7 +44,7 @@ class _CalendarPageSate extends State<CalendarPage> {
       appBar: AppBar(
         title: const Text('Kalendář'),
       ),
-      body: SingleChildScrollView(
+      body: loadScrollSnacksWrapper(context,
         controller: _scrollController,
         child: Column(
           children: [

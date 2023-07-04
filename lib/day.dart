@@ -204,13 +204,13 @@ class _DayPageSate extends State<DayPage> {
       appBar: AppBar(
         title: Text('${czWeekDayNames[widget.date.weekday]} ${DateFormat('d. M. y').format(widget.date)}, ${formatczDate(widget.date)}')
       ),
-      body: SingleChildScrollView(
+      body: loadScrollSnacksWrapper(context,
         child: Column(
           // crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (widget.date.weekday < 6 && !timeTableLoaded) OutlinedButton(
               onPressed: () {
-                loadEndpoint(context, 'timetable:temp', 'timetable/actual', {'date': DateFormat('yyyy-MM-dd').format(widget.date)});
+                loadEndpointSnack('timetable:temp', 'timetable/actual', {'date': DateFormat('yyyy-MM-dd').format(widget.date)});
                 setState(() {
                   timeTableLoaded = true;
                 });

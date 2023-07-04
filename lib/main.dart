@@ -13,6 +13,7 @@ void main() async {
   await Hive.openBox<int>('refresh');
   await Hive.openBox<Map>('passwords');
   await Hive.openBox<Map>('log');
+  await Hive.openBox<Map>('snacks');
   if (Platform.isAndroid || Platform.isIOS) {
     Workmanager().initialize(callbackDispatcher);
     Workmanager().registerPeriodicTask(
@@ -21,7 +22,7 @@ void main() async {
       constraints: Constraints(networkType: NetworkType.connected)
     );
   }
-  runApp(const MyApp());
+  runApp(MyApp(navigatorKey));
 }
 
 @pragma('vm:entry-point')
@@ -34,6 +35,7 @@ void callbackDispatcher () {
     await Hive.openBox<Map>('storage');
     await Hive.openBox<int>('refresh');
     await Hive.openBox<Map>('passwords');
+    await Hive.openBox<Map>('snacks');
     await logInfo(['bg loading started']);
     try {
       await bgLoad();
@@ -46,10 +48,12 @@ void callbackDispatcher () {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final GlobalKey<NavigatorState> navigatorKey;
+  const MyApp(this.navigatorKey, {super.key});
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Kleofáš',
       theme: ThemeData(
         brightness: Brightness.dark,

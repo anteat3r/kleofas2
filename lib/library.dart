@@ -17,8 +17,8 @@ class _LibraryPageState extends State<LibraryPage> {
   List<RecordModel> libraryData = [];
 
   void loadLibrary () async {
-    loadingDialog(context, () async {
-      await loginPbFuture();
+    loadingSnack( () async {
+      await loginPb();
       libraryData = await pb.collection('library').getFullList();
       setState(() {});
     });
@@ -85,7 +85,7 @@ class _LibraryPageState extends State<LibraryPage> {
                     ),
                     OutlinedButton(
                       onPressed: () {
-                        loadingDialog(context, () async {
+                        loadingSnack( () async {
                           final navigator_ = Navigator.of(context);
                           await pb.collection('library').create(body: {
                             'title': titlecontroller.text,
@@ -106,7 +106,7 @@ class _LibraryPageState extends State<LibraryPage> {
           )
         ],
       ),
-      body: SingleChildScrollView(
+      body: loadScrollSnacksWrapper(context,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: libraryData.map((article) => Padding(
@@ -171,7 +171,7 @@ class _LibraryPageState extends State<LibraryPage> {
                                   )),
                                   IconButton(
                                     onPressed: () {
-                                      loadingDialog(context, () async {
+                                      loadingSnack( () async {
                                         await pb.collection('library').update(article.id, body: {
                                           'files-': [file]
                                         });
@@ -184,7 +184,7 @@ class _LibraryPageState extends State<LibraryPage> {
                               )],
                               IconButton(
                                 onPressed: () {
-                                  loadingDialog(context, () async {
+                                  loadingSnack( () async {
                                     final res = await FilePicker.platform.pickFiles();
                                     if (res == null) return;
                                     final path = res.files.single.path;
@@ -203,7 +203,7 @@ class _LibraryPageState extends State<LibraryPage> {
                         actions: [
                           OutlinedButton(
                             onPressed: () {
-                              loadingDialog(context, () async {
+                              loadingSnack( () async {
                                 final navigator_ = Navigator.of(context);
                                 await pb.collection('library').delete(article.id);
                                 navigator_.pop();
@@ -215,7 +215,7 @@ class _LibraryPageState extends State<LibraryPage> {
                           ),
                           OutlinedButton(
                             onPressed: () {
-                              loadingDialog(context, () async {
+                              loadingSnack( () async {
                                 await pb.collection('library').update(article.id, body: {
                                   'body': articlecontroller.text
                                 });

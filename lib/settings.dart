@@ -46,7 +46,7 @@ class _SettingsPageState extends State<SettingsPage> {
     );
     return Scaffold(
       appBar: appBar,
-      body: SingleChildScrollView(
+      body: loadScrollSnacksWrapper(context,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -191,7 +191,7 @@ class _SettingsPageState extends State<SettingsPage> {
               padding: const EdgeInsets.all(8.0),
               child: OutlinedButton(
                 onPressed: () {
-                  loadingDialog(context, () async {
+                  loadingSnack(() async {
                     final NavigatorState navigator = Navigator.of(context);
                     await user.put('event_type', eventType.toString());
                     await user.put('qrpath', qrpath);
