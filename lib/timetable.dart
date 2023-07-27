@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 import 'package:kleofas2/day.dart';
 import 'package:flutter/material.dart';
@@ -74,7 +75,8 @@ class _TimetablePageState extends State<TimetablePage> {
           showDialog(context: context, builder: (BuildContext context) {
             return AlertDialog(
               title: const Text('Den'),
-              content: Text('Datum: ${czDate(day["Date"])}\nPopis: ${day["DayDescription"]}\nTyp: ${day["DayType"]}'),
+              // content: Text('Datum: ${czDate(day["Date"])}\nPopis: ${day["DayDescription"]}\nTyp: ${day["DayType"]}'),
+              content: Text(jsonEncode(day)),
               actions: [
                 TextButton(onPressed: () {Navigator.pop(context);}, child: const Text('Ok'))
               ],
@@ -110,8 +112,7 @@ class _TimetablePageState extends State<TimetablePage> {
                 width: 20,
                 height: 20,
                 child: Transform.translate(offset: const Offset(-3, 0), child: event['Id'].startsWith('K:') ? const Icon(Icons.tornado_rounded) : const Icon(Icons.event)),
-              )
-              ],
+              )],
             )
           ],
         )
@@ -127,7 +128,8 @@ class _TimetablePageState extends State<TimetablePage> {
           showDialog(context: context, builder: (BuildContext context) {
             return AlertDialog(
               title: const Text('Hodina'),
-              content: Text('Skupiny: ${hour["GroupIds"]?.map((item) => groups[item]["Abbrev"]).join(" ")}\nPředmět: ${subjects[hour["SubjectId"]]?["Name"]}\nUčitel: ${teachers[hour["TeacherId"]]?["Name"]}\nUčebna: ${rooms[hour["RoomId"]]?["Abbrev"]}\nTéma: ${hour["Theme"]}\nZměna: ${hour["Change"] == null ? '' : '\n  Změna předmětu: ${hour["Change"]["ChangeSubject"]}\n  Den: ${czDate(hour["Change"]["Day"])}\n  Hodiny: ${hour["Change"]["Hours"]}\n  Typ změny: ${hour["Change"]["ChangeType"]}\n  Popis: ${hour["Change"]["Description"]}\n  Čas: ${hour["Change"]["Time"]}\n  Zkratka typu: ${hour["Change"]["TypeAbbrev"]}\n  Název typu: ${hour["Change"]["TypeName"]}'}'),
+              // content: Text('Skupiny: ${hour["GroupIds"]?.map((item) => groups[item]["Abbrev"]).join(" ")}\nPředmět: ${subjects[hour["SubjectId"]]?["Name"]}\nUčitel: ${teachers[hour["TeacherId"]]?["Name"]}\nUčebna: ${rooms[hour["RoomId"]]?["Abbrev"]}\nTéma: ${hour["Theme"]}\nZměna: ${hour["Change"] == null ? '' : '\n  Změna předmětu: ${hour["Change"]["ChangeSubject"]}\n  Den: ${czDate(hour["Change"]["Day"])}\n  Hodiny: ${hour["Change"]["Hours"]}\n  Typ změny: ${hour["Change"]["ChangeType"]}\n  Popis: ${hour["Change"]["Description"]}\n  Čas: ${hour["Change"]["Time"]}\n  Zkratka typu: ${hour["Change"]["TypeAbbrev"]}\n  Název typu: ${hour["Change"]["TypeName"]}'}'),
+              content: Text(jsonEncode(hour)),
               actions: [
                 TextButton(onPressed: () {Navigator.pop(context);}, child: const Text('Ok'))
               ],
@@ -141,9 +143,7 @@ class _TimetablePageState extends State<TimetablePage> {
             ? ( hour?['Change']?['TypeAbbrev'] == null
               ? Colors.lightBlue
               : Colors.lightBlue.shade600 )
-            : hour == null || hour['TeacherId'] == null
-              ? const Color.fromARGB(255, 48, 48, 48)
-              : Colors.blue.shade800
+            : const Color.fromARGB(255, 48, 48, 48)
           ),
         ),
         child: Column(

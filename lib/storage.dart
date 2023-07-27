@@ -10,6 +10,12 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 const List<String> czWeekDayNames = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'];
 
+const Map<String, String> eventNames = {
+  'EventType.my': '/my',
+  'EventType.all': '',
+  'EventType.public': '/public',
+};
+
 class SimpleNotif {
   final String title;
   final String body;
@@ -38,7 +44,7 @@ void globalShowDialog (Widget Function(BuildContext) builder) {
 
 const Map<String, String> ids = {"08": "0.C", "0B": "0.J", "0C": "0.M", "05": "U21", "07": "1.J", "06": "1.M", "04": "2.C", "02": "2.J", "03": "2.M", "ZZ": "3.C", "00": "3.J", "01": "3.M", "ZW": "4.C", "ZX": "4.J", "ZY": "4.M", "ZT": "5.J", "ZS": "5.M", "ZR": "6.J", "ZQ": "6.M", "ZO": "7.J", "ZM": "7.M", "ZL": "8.J", "ZK": "8.M", "UUZFR": "Balák Ondřej", "UPZEK": "Beuzon Benoit", "UTZFE": "Frimlová Klára", "UZZAQ": "Haschková Pavla", "UOZEB": "Holíková Jolana", "UZZC3": "Holubová Ivana", "UTVCG": "Hradová Pecinová Zuzana", "UWZGC": "Chvosta Petr", "UKZD6": "Jahn Vítězslav", "UZZAS": "Jirošová Štěpánka", "UVZG4": "Kirschner Věra", "UZZC5": "Kocourková Blanka", "UWZGI": "Kocúrová Zuzana", "UTZFG": "Kolářová Magdaléna", "UWZG6": "Kubelková Natálie", "UOZE5": "Loula Karel", "UWZGB": "Lukáčová Denisa", "UWZGG": "Mádlová Zdenka", "UXZGL": "Matějka Jakub", "URZEY": "Matušík Michal", "UUZFW": "Mazná Michaela", "UWZG7": "Miškovský Jakub", "UQZEQ": "Nosková Alena", "UAPP8": "Nováková Renata", "UK8S1": "Ortinská Ludmila", "UZZ9N": "Pauchová Renata", "UZZC9": "Pavel Josef", "USZFA": "Pavlousek Pavel", "U9F2I": "Pěchová Světlana", "USZF8": "Petrová Eva", "UKZD5": "Petržílka František", "ULZDF": "Plese Conor", "UWZG8": "Procházka Marek", "UKZD3": "Prokopec Michal", "UUZFV": "Radvanová Sabina", "UTZFK": "Roček Daniel", "UZZBZ": "Růžičková Lucie", "UUZFY": "Růžičková Monika", "UZZCC": "Růžičková Václava", "UZZ9X": "Semeráková Vladimíra", "UTZFM": "Skálová Zuzana", "UKZD4": "Skoupilová Petra", "UZZCL": "Stárová Martina", "UXZGK": "Stockmann Alissia", "UKZD7": "Stříbrná Leona", "UWZGA": "Suldovská Klára", "UQZEU": "Šperl Jiří", "UQZET": "Štěchová Linda", "UDZUD": "Švarcová Dagmar", "USZF6": "Tůmová Jaroslava", "UTZFD": "Valášková Andrea", "UWZGE": "Vilímová Sheila", "UWZGD": "Vincena Petr", "UVZG3": "Wangerin Torben", "UWZG9": "Wilhelm Lukáš", "UUZFP": "Yaghobová Anna", "UUZFT": "Zajíc František", "USZFC": "Zítka Martin", "Y6": "AUL", "4E": "F", "F2": "Fit", "YL": "Fl", "0D": "Chl", "C7": "I1", "RI": "I2", "NW": "TMS", "YJ": "TSO", "30": "Tv", "YM": "U1", "0W": "U10", "GZ": "U11", "1K": "U12", "N7": "U13", "YG": "U14", "YI": "U15", "YN": "U2", "N6": "U22", "PU": "U23", "LG": "U24", "Y2": "U25", "YC": "U26", "YD": "U27", "D5": "U31", "OG": "U32", "YB": "U33", "YE": "U34", "Y7": "U35", "63": "U36", "Y9": "U37", "Y8": "U38", "2D": "U41", "PZ": "U42", "68": "U43", "YF": "U44", "YO": "Zas"};
 
-final pb = PocketBase('https://kleofas.eu/pb'); 
+final pb = PocketBase('https://pb.kleofas.eu'); 
 Box<Map> storage = Hive.box<Map>('storage');
 Box<String> user = Hive.box<String>('user');
 Box<int> refresh = Hive.box<int>('refresh');
@@ -201,7 +207,8 @@ void loadingSnack (Future<void> Function() func, [String message = 'loading', Co
   await pushSnack(snackName, message, color);
   try {
     await func();
-  } catch (e) {
+  } catch (e, s) {
+    print('Error $e: $s');
     globalShowDialog((BuildContext context) {
       return AlertDialog(
         title: const Text('Error'),
@@ -226,11 +233,13 @@ void loadingSnack (Future<void> Function() func, [String message = 'loading', Co
 }
 
 Future<void> loginUser () async {
+  if (DateTime.now().difference(DateTime.parse(user.get('lastbakalogin') ?? '1970-01-01')).inSeconds < 3600) return;
   Result token = await login(getPassword("bakalari", "url"), getPassword("bakalari", "username"), getPassword("bakalari", "password"));
   if (token.isFailure) {
     throw ErrorDescription(jsonDecode(token.failure)['error_description']);
   }
   await user.put('token', token.success);
+  await user.put('lastbakalogin', DateTime.now().toString());
 }
 
 Future<void> loadEndpoint (String endpoint, [String? url, Map<String, dynamic>? payload]) async {
@@ -267,9 +276,9 @@ String czDate (String? isoTime) {
 Map mapListToMap (Iterable list, {String id = 'Id'}) => {for (Map item in list) item[id]: item};
 
 Future<void> loadTasks () async {
-  final tasks = await pb.collection('tasks').getFullList();
+  final tasks = await pb.collection('tasks').getFullList(filter: user.get('streams')?.split(' ').map((e) => 'stream.id = "$e"').join(' || '));
   await Future.wait([
-    storage.put('tasks', {'Tasks': tasks.map((e) => e.data['json']..['KleoId'] = e.id).toList()}),
+    storage.put('tasks', {'Tasks': tasks.map((e) => e.data).toList()}),
     refresh.put('tasks', DateTime.now().millisecondsSinceEpoch)
   ]);
 }
@@ -434,10 +443,12 @@ void newTaskDialog (BuildContext context, [DateTime? date]) async {
 }
 
 Future<bool> loginPb () async {
+  if (DateTime.now().difference(DateTime.parse(user.get('lastpblogin') ?? '1970-01-01')).inSeconds < 1209600) return true;
   if (!hasPassword("kleofas", "username") || !hasPassword("kleofas", "password")) return false;
   final record = await pb.collection('users').authWithPassword(getPassword("kleofas", "username"), getPassword("kleofas", "password"));
   await user.put('kleolibrary', (record.record?.data['librarian'] ?? false) ? 'true' : '');
   await user.put('kleouserid', record.record?.id ?? '');
+  await user.put('lastpblogin', DateTime.now().toString());
   return true;
 }
 
@@ -450,7 +461,7 @@ Future<void> completeReload () async {
     loadEndpoint('timetable', 'timetable/actual'),
     loadEndpoint('absence', 'absence/student'),
     loadEndpoint('marks'),
-    loadEndpoint('events', 'events/${user.get('event_type')?.split(".")[1] ?? "my"}'),
+    loadEndpoint('events', 'events${eventNames[user.get('event_type') ?? "EventType.my"]}'),
     loadTasks(),
   ]);
 }

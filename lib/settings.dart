@@ -1,6 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:pocketbase/pocketbase.dart';
 import 'storage.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -20,6 +21,19 @@ class _SettingsPageState extends State<SettingsPage> {
   TextEditingController notifdurcontroller = TextEditingController();
   TextEditingController notifstartcontroller = TextEditingController();
   TextEditingController notifendcontroller = TextEditingController();
+  Map<String, String> streams = {};
+  final addStreamController = TextEditingController();
+
+  void loadStreamTitles () async {
+    for (var key in streams.keys) {
+      try {
+        streams[key] = (await pb.collection('streams').getOne(key)).data['title'];
+      } on ClientException catch (_) {
+        streams[key] = 'NEEXISTUJE';
+      }
+    }
+    setState(() {});
+  }
 
   @override
   void initState() {
@@ -29,6 +43,7 @@ class _SettingsPageState extends State<SettingsPage> {
     notifdurcontroller.text = user.get("notifdur") ?? "15";
     notifstartcontroller.text = user.get("notifstart") ?? "6";
     notifendcontroller.text = user.get("notifend") ?? "22";
+    streams = {for (final stream in user.get('streams')?.split(' ') ?? []) stream: ''};
     if (user.get('event_type') == null) return;
     if (user.get('event_type') == 'EventType.my') {
       eventType = EventType.my;
@@ -37,6 +52,7 @@ class _SettingsPageState extends State<SettingsPage> {
     } else {
       eventType = EventType.public;
     }
+    loadStreamTitles();
   }
 
   @override
@@ -146,7 +162,58 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ),
             ),
-            const Text('Notifikace'),
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text('Streamy'),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: StatefulBuilder(builder: (context, setState2) {
+                return Column(
+                  children: [
+                    ...streams.keys.map((stream) => Row(
+                      children: [
+                        RichText(text: TextSpan(children: [
+                          TextSpan(text: streams[stream] ?? '?'),
+                          TextSpan(text: '   $stream', style: const TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey,
+                          )),
+                        ])),
+                        IconButton(
+                          onPressed: () {
+                            setState2(() {
+                              streams.remove(stream);
+                            });
+                          }, icon: const Icon(Icons.delete)
+                        ),
+                      ],
+                    )).toList(),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: addStreamController,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () {
+                            setState2(() {
+                              streams[addStreamController.text] = '';
+                            });
+                            loadStreamTitles();
+                          }, icon: const Icon(Icons.add)
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+              },),
+            ),
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text('Notifikace'),
+            ),
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: TextField(
@@ -158,7 +225,10 @@ class _SettingsPageState extends State<SettingsPage> {
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               ),
             ),
-            const Text("Čas generování notifikací (hodiny, 0 - 24)"),
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text("Čas generování notifikací (hodiny, 0 - 24)"),
+            ),
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Row(
@@ -199,6 +269,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     await user.put('notifdur', notifdurcontroller.text);
                     await user.put('notifstart', notifstartcontroller.text);
                     await user.put('notifend', notifendcontroller.text);
+                    await user.put('streams', streams.keys.join(' '));
                     navigator.pop();
                   });
                 },
