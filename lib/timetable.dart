@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'storage.dart';
 import 'package:intl/intl.dart';
+import 'dart:io';
 
 DateTime roundDateTime (DateTime date) {
   if (date.hour > 12) {
@@ -66,7 +67,10 @@ class _TimetablePageState extends State<TimetablePage> {
     List events = List.from(storage.get('events')?['Events'] ?? []);
     events.addAll(storage.get('tasks')?['Tasks'] ?? []);
     day['Date'] = roundDateTime(DateTime.parse(day['Date'])).toIso8601String();
-    events = events.where((element) => element['Times'].map((element1) => element1['StartTime'].split('T')[0]).contains(day['Date'].split('T')[0])).toList();
+    events = events.where((element) => isEventInvolved(element, day['Date']),).toList();
+    if (events.length > 4) {
+      events = events.sublist(0, 3) + [{}];
+    }
     return SizedBox(
       height: maxHeight * 6 / 35,
       child: ElevatedButton(
@@ -107,11 +111,17 @@ class _TimetablePageState extends State<TimetablePage> {
             Wrap(
               alignment: WrapAlignment.center,
               direction: Axis.horizontal,
-              children: [for (var event in events) Container(
+              children: [for (final event in events) Container(
                 margin: const EdgeInsets.all(2),
-                width: 20,
-                height: 20,
-                child: Transform.translate(offset: const Offset(-3, 0), child: event['Id'].startsWith('K:') ? const Icon(Icons.tornado_rounded) : const Icon(Icons.event)),
+                width: Platform.isWindows ? 17 : 20,
+                height: Platform.isWindows ? 17 : 20,
+                child: Transform.translate(offset: const Offset(-3, 0), child:
+                  event != {}
+                  ? ( event.containsKey('time')
+                    ? Icon(Icons.tornado_rounded, size: Platform.isWindows ? 20 : 24,)
+                    : Icon(Icons.event, size: Platform.isWindows ? 20 : 24,) )
+                  : const Text('...')
+                ),
               )],
             )
           ],
@@ -129,7 +139,7 @@ class _TimetablePageState extends State<TimetablePage> {
             return AlertDialog(
               title: const Text('Hodina'),
               // content: Text('Skupiny: ${hour["GroupIds"]?.map((item) => groups[item]["Abbrev"]).join(" ")}\nPředmět: ${subjects[hour["SubjectId"]]?["Name"]}\nUčitel: ${teachers[hour["TeacherId"]]?["Name"]}\nUčebna: ${rooms[hour["RoomId"]]?["Abbrev"]}\nTéma: ${hour["Theme"]}\nZměna: ${hour["Change"] == null ? '' : '\n  Změna předmětu: ${hour["Change"]["ChangeSubject"]}\n  Den: ${czDate(hour["Change"]["Day"])}\n  Hodiny: ${hour["Change"]["Hours"]}\n  Typ změny: ${hour["Change"]["ChangeType"]}\n  Popis: ${hour["Change"]["Description"]}\n  Čas: ${hour["Change"]["Time"]}\n  Zkratka typu: ${hour["Change"]["TypeAbbrev"]}\n  Název typu: ${hour["Change"]["TypeName"]}'}'),
-              content: Text(jsonEncode(hour)),
+              content: Text(const JsonEncoder.withIndent('    ').convert(hour)),
               actions: [
                 TextButton(onPressed: () {Navigator.pop(context);}, child: const Text('Ok'))
               ],
@@ -143,7 +153,10 @@ class _TimetablePageState extends State<TimetablePage> {
             ? ( hour?['Change']?['TypeAbbrev'] == null
               ? Colors.lightBlue
               : Colors.lightBlue.shade600 )
-            : const Color.fromARGB(255, 48, 48, 48)
+            : ( hour == null || hour['TeacherId'] == null
+                ? const Color.fromARGB(255, 48, 48, 48)
+                : Colors.blue.shade800
+              )
           ),
         ),
         child: Column(
@@ -181,28 +194,28 @@ class _TimetablePageState extends State<TimetablePage> {
             final pickedDate = await showDatePicker(context: context, initialDate: curDate, firstDate: DateTime(1969), lastDate: DateTime(2069));
             if (pickedDate == null) return;
             curDate = pickedDate;
-            setState(() { loadEndpointSnack('timetable', 'timetable/actual', {'date': DateFormat('yyyy-MM-dd').format(curDate)}); });
+            setState(() { loadEndpointSnack('timetable', url: 'timetable/actual', payload: {'date': DateFormat('yyyy-MM-dd').format(curDate)}); });
           },
           icon: const Icon(Icons.date_range)
         ),
         IconButton(
           onPressed: () {
             curDate = curDate.subtract(const Duration(days: 7));
-            setState(() { loadEndpointSnack('timetable', 'timetable/actual', {'date': DateFormat('yyyy-MM-dd').format(curDate)}); });
+            setState(() { loadEndpointSnack('timetable', url: 'timetable/actual', payload: {'date': DateFormat('yyyy-MM-dd').format(curDate)}); });
           },
           icon: const Icon(Icons.arrow_left_rounded)
         ),
         IconButton(
           onPressed: () {
               curDate = DateTime.now();
-            setState(() { loadEndpointSnack('timetable', 'timetable/actual'); });
+            setState(() { loadEndpointSnack('timetable', url: 'timetable/actual'); });
           },
           icon: const Icon(Icons.refresh_rounded)
         ),
         IconButton(
           onPressed: () {
             curDate = curDate.add(const Duration(days: 7));
-            setState(() { loadEndpointSnack('timetable', 'timetable/actual', {'date': DateFormat('yyyy-MM-dd').format(curDate)}); });
+            setState(() { loadEndpointSnack('timetable', url: 'timetable/actual', payload: {'date': DateFormat('yyyy-MM-dd').format(curDate)}); });
           },
           icon: const Icon(Icons.arrow_right_rounded)
         ),

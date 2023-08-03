@@ -85,7 +85,7 @@ class _CalendarPageSate extends State<CalendarPage> {
                   ...List.generate(7, (colIndex) {
                     int dayOffset = 7*rowIndex+colIndex-(schoolYearStart.weekday-1)%7;
                     DateTime date = roundDateTime(schoolYearStart.add(Duration(days: dayOffset)));
-                    List localEvents = events.where((element) => element['Times'].map((element1) => element1['StartTime'].split('T')[0]).contains(date.toIso8601String().split('T')[0])).toList();
+                    List localEvents = events.where((element) => isEventInvolved(element, date),).toList();
                     return SizedBox(
                       width: cellWidth,
                       height: cellHeight,
@@ -94,7 +94,7 @@ class _CalendarPageSate extends State<CalendarPage> {
                           Navigator.push(context, MaterialPageRoute(builder: (context) => DayPage(date)));
                         },
                         onLongPress: () {
-                          newTaskDialog(context, date);
+                          showTaskDialog(context, setState, newTime: date);
                         },
                         style: ButtonStyle(
                           backgroundColor: MaterialStatePropertyAll(
@@ -121,8 +121,8 @@ class _CalendarPageSate extends State<CalendarPage> {
                               alignment: WrapAlignment.center,
                               direction: Axis.horizontal,
                               children: localEvents.length < 3
-                              ? ([for (var event in localEvents) Icon(event['Id'].startsWith('K:') ? Icons.tornado_rounded : Icons.event, size: 15,)])
-                              : [Icon(localEvents[0]['Id'].startsWith('K:') ? Icons.tornado_rounded : Icons.event, size: 15,), const Text('...')]
+                              ? ([for (var event in localEvents) Icon(event.containsKey('time') ? Icons.tornado_rounded : Icons.event, size: 15,)])
+                              : [Icon(localEvents[0].containsKey('time') ? Icons.tornado_rounded : Icons.event, size: 15,), const Text('...')]
                             )
                           ],
                         ),

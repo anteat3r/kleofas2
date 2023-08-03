@@ -144,7 +144,7 @@ class _EventsPageState extends State<EventsPage> {
                       height: 20,
                       child: Transform.translate(
                           offset: const Offset(-3, 0),
-                          child: event['Id'].startsWith('K:')
+                          child: event.containsKey('time')
                               ? const Icon(Icons.tornado_rounded)
                               : const Icon(Icons.event)),
                     )

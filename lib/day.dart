@@ -4,6 +4,7 @@ import 'events.dart';
 import 'package:intl/intl.dart';
 import 'storage.dart';
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 
 const List<String> czWeekDayNames = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'];
 
@@ -199,7 +200,7 @@ class _DayPageSate extends State<DayPage> {
   Widget build (BuildContext context) {
     List events = List.from(storage.get('events')?['Events'] ?? []);
     events.addAll(storage.get('tasks')?['Tasks'] ?? []);
-    events = events.where((element) => element['Times'].map((element1) => element1['StartTime'].split('T')[0]).contains(widget.date.toIso8601String().split('T')[0]) as bool).toList();
+    events = events.where((element) => isEventInvolved(element, widget.date)).toList();
     return Scaffold(
       appBar: AppBar(
         title: Text('${czWeekDayNames[widget.date.weekday]} ${DateFormat('d. M. y').format(widget.date)}, ${formatczDate(widget.date)}')
@@ -210,7 +211,7 @@ class _DayPageSate extends State<DayPage> {
           children: [
             if (widget.date.weekday < 6 && !timeTableLoaded) OutlinedButton(
               onPressed: () {
-                loadEndpointSnack('timetable:temp', 'timetable/actual', {'date': DateFormat('yyyy-MM-dd').format(widget.date)});
+                loadEndpointSnack('timetable:temp', url: 'timetable/actual', payload: {'date': DateFormat('yyyy-MM-dd').format(widget.date)});
                 setState(() {
                   timeTableLoaded = true;
                 });
@@ -223,6 +224,9 @@ class _DayPageSate extends State<DayPage> {
               List getElem (String name) => value.get('timetable:temp')?[name] ?? [];
               List hours = getElem('Hours');
               List days = getElem('Days');
+              if (kDebugMode) {
+                print(days);
+              }
               // hours = hours.sublist(max(0, hours.indexWhere((element) => days[widget.date.weekday-1]['Atoms'].any((atom) => atom['HourId'] == element['Id']))), hours.lastIndexWhere((element) => days[widget.date.weekday-1]['Atoms'].any((atom) => atom['HourId'] == element['Id'])) + 1);
               hours = hours.sublist(max(0, hours.indexWhere((element) => days.any((day) => day['Atoms'].any((atom) => atom['HourId'] == element['Id'])))), hours.lastIndexWhere((element) => days.any((day) => day['Atoms'].any((atom) => atom['HourId'] == element['Id']))) + 1);
               if (hours.isEmpty) {
@@ -351,21 +355,27 @@ class _DayPageSate extends State<DayPage> {
               style: const ButtonStyle(
                 padding: MaterialStatePropertyAll(EdgeInsets.all(10))
               ),
-              onPressed: () {showDialog(context: context, builder: (BuildContext context) => eventDialog(event, context));},
+              onPressed: () {
+                if (event.containsKey('time')) {
+                  showTaskDialog(context, setState, task: event);
+                } else {
+                  showDialog(context: context, builder: (BuildContext context) => eventDialog(event, context));
+                }
+              },
               child: Row(
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
-                    child: Icon(event['Id'].startsWith('K:') ? Icons.tornado_rounded : Icons.event, size: 30,),
+                    child: Icon(event.containsKey('time') ? Icons.tornado_rounded : Icons.event, size: 30,),
                   ),
-                  Expanded(child: Text((event['Id'].startsWith('K:') ? event['EventType']['Abbrev'] + ' - ' : '') + event['Title'], style: const TextStyle(fontSize: 14), overflow: TextOverflow.ellipsis, maxLines: 1,))
+                  Expanded(child: Text((event.containsKey('time') ? '${event['subject'] ?? '?'} - ' : '') + (event.containsKey('time') ? event['title'] : event['Title']), style: const TextStyle(fontSize: 14), overflow: TextOverflow.ellipsis, maxLines: 1,))
                 ],
               )
             )
           ],
           OutlinedButton(
             onPressed: () {
-              newTaskDialog(context, widget.date);
+              showTaskDialog(context, setState, newTime: widget.date);
             },
             child: const Text("Přidat task")
           )

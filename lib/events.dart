@@ -6,31 +6,28 @@ import 'day.dart';
 import 'dart:convert';
 
 AlertDialog eventDialog(Map event, BuildContext context) {
+  if (event.containsKey('time')) {
+    return AlertDialog(
+      title: const Text('Task'),
+      content: SingleChildScrollView(child: Text(const JsonEncoder.withIndent(' ').convert(event))),
+      actions: [
+        TextButton(onPressed: () {
+          Navigator.pop(context);
+        }, child: const Text('Ok')),
+      ],
+    );
+  }
   return AlertDialog(
     title: const Text('Event'),
-    // content: SingleChildScrollView(child: Text('Title: ${event["Title"]}\nDescription: ${event["Description"]}\nEvent Type:\n\tAbbrev: ${event["EventType"]["Abbrev"]}\n\tName: ${event["EventType"]["Name"]}\nNote: ${event["Note"]}\nDate Changed: ${czDate(event["DateChanged"])}\nTimes:${event["Times"].map((e) => "\n\tTime:\n\t\tWhole Day: ${e['WholeDay']}\n\t\tStart Time: ${czDate(e['StartTime'])}\n\t\tEnd Time: ${czDate(e['EndTime'])}\n\t\tInterval Start Time: ${czDate(e['IntervalStartTime'])}\n\t\tInterval End Time: ${czDate(e['IntervalEndTime'])}").join("\n\t")}\nClasses:${event["Classes"].map((e) => "\n\tClass:\n\t\tAbbrev: ${e['Abbrev']}\n\t\tName: ${e['Name']}").join("\n\t")}\nClass Sets: TODO\nTeachers:${event["Teachers"].map((e) => "\n\tTeacher:\n\t\tAbbrev: ${e['Abbrev']}\n\t\tName: ${e['Name']}").join("\n\t")}\nTeacher Sets: TODO\nRooms:${event["Rooms"].map((e) => "\n\tRoom:\n\t\tAbbrev: ${e['Abbrev']}\n\t\tName: ${e['Name']}").join("\n\t")}\nRoom Sets: TODO\nStudents:${event["Students"].map((e) => "\n\tName: ${e['Name']}").join("\n\t")}')),
+    // content: SingleChildScrollView(child: Text('Title: ${event["Title"]}\nDescription: ${event["Description"]}\nEvent Type:\n\tAbbrev: ${event["EventType"]["Abbrev"]}\n\tName: ${event["EventType"]["Name"]}\nNote: ${event["Note"]}\nDate Changed: ${czDate(event["DateChanged"])}\nTimes:${event["Times"].map((e) => "\n\tTime:\n\t\tWhole Day: ${e['WholeDay']}\n\t\tStart Time: ${czDate(e['StartTime'])}\n\t\tEnd Time: ${czDate(e['EndTime'])}\n\t\tInterval Start Time: ${czDate(e['IntervalStartTime'])}\n\t\tInterval End Time: ${czDate(e['IntervalEndTime'])}").join("\n\t")}\nClasses:${event["Classes"].map((e) => "\n\tClass:\n\t\tAbbrev: ${e['Abbrev']}\n\t\tName: ${e['Name']}").join("\n\t")}\nClass Sets: TO DO\nTeachers:${event["Teachers"].map((e) => "\n\tTeacher:\n\t\tAbbrev: ${e['Abbrev']}\n\t\tName: ${e['Name']}").join("\n\t")}\nTeacher Sets: TO DO\nRooms:${event["Rooms"].map((e) => "\n\tRoom:\n\t\tAbbrev: ${e['Abbrev']}\n\t\tName: ${e['Name']}").join("\n\t")}\nRoom Sets: TO DO\nStudents:${event["Students"].map((e) => "\n\tName: ${e['Name']}").join("\n\t")}')),
     content: SingleChildScrollView(child: Text(const JsonEncoder.withIndent(' ').convert(event))),
     actions: [
-      if (event['Id'].contains('K:'))
-        TextButton(
-            onPressed: () {
-              loadingSnack(() async {
-                final NavigatorState navigator = Navigator.of(context);
-                if (!hasPassword("kleofas", "username") ||
-                    !hasPassword("klefoas", "password")) return;
-                await pb.collection('users').authWithPassword(
-                    getPassword("bakalari", "username"),
-                    getPassword("bakalari", "password"));
-                await pb.collection('tasks').delete(event['KleoId']);
-                navigator.pop(navigator);
-              });
-            },
-            child: const Text('Delete')),
       TextButton(
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-          child: const Text('Ok')),
+        onPressed: () {
+          Navigator.of(context).pop();
+        },
+        child: const Text('Ok')
+      ),
     ],
   );
 }
@@ -61,13 +58,13 @@ class _EventsPageState extends State<EventsPage> {
               });
             }),
         IconButton(
-            onPressed: () {
-              setState(() {
-                loadEndpointSnack('events',
-                    'events${eventNames[user.get('event_type') ?? "EventType.my"]}');
-              });
-            },
-            icon: const Icon(Icons.refresh_rounded)),
+          onPressed: () {
+            setState(() {
+              loadEndpointSnack('events', url: 'events${eventNames[user.get('event_type') ?? "EventType.my"]}');
+            });
+          },
+          icon: const Icon(Icons.refresh_rounded)
+        ),
       ],
     );
     return Scaffold(
@@ -87,19 +84,19 @@ class _EventsPageState extends State<EventsPage> {
               children: [
                 OutlinedButton(
                   onPressed: () {
-                    loadEndpointSnack('events', 'events/my');
+                    loadEndpointSnack('events', url: 'events/my');
                   },
                   child: const Text('Load My')
                 ),
                 OutlinedButton(
                   onPressed: () {
-                    loadEndpointSnack('events', 'events');
+                    loadEndpointSnack('events', url: 'events');
                   },
                   child: const Text('Load All')
                 ),
                 OutlinedButton(
                   onPressed: () {
-                    loadEndpointSnack('events', 'events/public');
+                    loadEndpointSnack('events', url: 'events/public');
                   },
                   child: const Text('Load Public')
                 ),
@@ -167,8 +164,9 @@ class _EventsPageState extends State<EventsPage> {
             ),
             ValueListenableBuilder(
                 valueListenable: storage.listenable(),
-                builder: (BuildContext context, Box<Map> value, child) {
-                  List events = List.from(value.get('events')?['Events'] ?? []);
+                builder: (BuildContext context, Box<Map> storage_, child) {
+                  List events = List.from(storage_.get('events')?['Events'] ?? []);
+                  // events.addAll(storage_.get('tasks')?['Tasks'] ?? []);
                   return Column(children: <Widget>[
                     ...List.generate(events.length, (index) {
                       Map event = events[index];
@@ -176,20 +174,17 @@ class _EventsPageState extends State<EventsPage> {
                       if (appliedDateFilter != null) {
                         if (!event.toString().contains(DateFormat('yyyy-MM-dd').format(appliedDateFilter!))) return [];
                       }
-                      return [Padding(
-                        padding: const EdgeInsets.only(
-                            left: 8.0, right: 8.0, top: 5.0),
-                        child: OutlinedButton(
+                      return [
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8.0, right: 8.0, top: 5.0),
+                          child: OutlinedButton(
                             style: ButtonStyle(
                               textStyle: MaterialStatePropertyAll(TextStyle(
-                                  foreground: Paint()..color = Colors.white)),
+                                foreground: Paint()..color = Colors.white
+                              )),
                             ),
                             onPressed: () {
-                              showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return eventDialog(event, context);
-                                  });
+                              showDialog(context: context, builder: (BuildContext context) => eventDialog(event, context));
                             },
                             child: Padding(
                               padding: const EdgeInsets.only(

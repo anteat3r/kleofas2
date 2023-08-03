@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -22,7 +24,9 @@ class _SettingsPageState extends State<SettingsPage> {
   TextEditingController notifstartcontroller = TextEditingController();
   TextEditingController notifendcontroller = TextEditingController();
   Map<String, String> streams = {};
+  Map<String, String> adminStreams = {};
   final addStreamController = TextEditingController();
+  final addAdminStreamController = TextEditingController();
 
   void loadStreamTitles () async {
     for (var key in streams.keys) {
@@ -30,6 +34,19 @@ class _SettingsPageState extends State<SettingsPage> {
         streams[key] = (await pb.collection('streams').getOne(key)).data['title'];
       } on ClientException catch (_) {
         streams[key] = 'NEEXISTUJE';
+      }
+    }
+    for (var key in adminStreams.keys) {
+      try {
+        await loginPb();
+        final record = await pb.collection('streams').getOne(key);
+        if (!record.data['admins'].contains(pb.authStore.model.id)) {
+          adminStreams[key] = 'NEJSI ADMIN';
+        } else {
+          adminStreams[key] = record.data['title'];
+        }
+      } on ClientException catch (_) {
+        adminStreams[key] = 'NEEXISTUJE';
       }
     }
     setState(() {});
@@ -44,6 +61,13 @@ class _SettingsPageState extends State<SettingsPage> {
     notifstartcontroller.text = user.get("notifstart") ?? "6";
     notifendcontroller.text = user.get("notifend") ?? "22";
     streams = {for (final stream in user.get('streams')?.split(' ') ?? []) stream: ''};
+    if (user.get('streams')?.isEmpty ?? true) {
+      streams = {};
+    }
+    adminStreams = {for (final stream in user.get('adminstreams')?.split(' ') ?? []) stream: ''};
+    if (user.get('adminstreams')?.isEmpty ?? true) {
+      adminStreams = {};
+    }
     if (user.get('event_type') == null) return;
     if (user.get('event_type') == 'EventType.my') {
       eventType = EventType.my;
@@ -212,6 +236,54 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             const Padding(
               padding: EdgeInsets.all(8.0),
+              child: Text('Admin Streamy'),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: StatefulBuilder(builder: (context, setState2) {
+                return Column(
+                  children: [
+                    ...adminStreams.keys.map((stream) => Row(
+                      children: [
+                        RichText(text: TextSpan(children: [
+                          TextSpan(text: adminStreams[stream] ?? '?'),
+                          TextSpan(text: '   $stream', style: const TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey,
+                          )),
+                        ])),
+                        IconButton(
+                          onPressed: () {
+                            setState2(() {
+                              adminStreams.remove(stream);
+                            });
+                          }, icon: const Icon(Icons.delete)
+                        ),
+                      ],
+                    )).toList(),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: addAdminStreamController,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () {
+                            setState2(() {
+                              adminStreams[addAdminStreamController.text] = '';
+                            });
+                            loadStreamTitles();
+                          }, icon: const Icon(Icons.add)
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+              },),
+            ),
+            const Padding(
+              padding: EdgeInsets.all(8.0),
               child: Text('Notifikace'),
             ),
             Padding(
@@ -262,6 +334,18 @@ class _SettingsPageState extends State<SettingsPage> {
               child: OutlinedButton(
                 onPressed: () {
                   loadingSnack(() async {
+                    if (streams.containsValue('NEEXISTUJE') || adminStreams.containsValue('NEEXITUJE')) {
+                      globalShowDialog((context) => const AlertDialog(
+                        title: Text('Stream neexistuje'),
+                        content: Text('Pokusil jsi se uložit stream, který neexistuje.'),));
+                      return;
+                    }
+                    if (streams.containsValue('NEJSI ADMIN')) {
+                      globalShowDialog((context) => const AlertDialog(
+                        title: Text('Nejsi admin'),
+                        content: Text('Pokusil jsi se uložit stream, jehož nejsi admin, jako admin stream.'),));
+                      return;
+                    }
                     final NavigatorState navigator = Navigator.of(context);
                     await user.put('event_type', eventType.toString());
                     await user.put('qrpath', qrpath);
@@ -270,6 +354,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     await user.put('notifstart', notifstartcontroller.text);
                     await user.put('notifend', notifendcontroller.text);
                     await user.put('streams', streams.keys.join(' '));
+                    await user.put('adminstreams', adminStreams.keys.join(' '));
+                    await user.put('streamsnames', jsonEncode(streams));
+                    await user.put('adminstreamsnames', jsonEncode(adminStreams));
                     navigator.pop();
                   });
                 },

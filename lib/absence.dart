@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'storage.dart';
@@ -27,7 +29,7 @@ class _AbsencePageState extends State<AbsencePage> {
         actions: [
           IconButton(
             onPressed: () {
-              setState(() { loadEndpointSnack('absence', 'absence/student'); });
+              setState(() { loadEndpointSnack('absence', url: 'absence/student'); });
             },
             icon: const Icon(Icons.refresh_rounded)
           ),
@@ -72,7 +74,8 @@ class _AbsencePageState extends State<AbsencePage> {
                             showDialog(context: context, builder: (BuildContext context) {
                               return AlertDialog(
                                 title: const Text('Absence'),
-                                content: Text('Date: ${czDate(absence["Date"])}\nUnsolved: ${absence["Unsolved"]}\nOk: ${absence["Ok"]}\nMissed: ${absence["Missed"]}\nLate: ${absence["Late"]}\nSoon: ${absence["Soon"]}\nSchool: ${absence["School"]}\nDistance Teaching: ${absence["DistanceTeaching"]}'),
+                                content: Text(const JsonEncoder.withIndent('    ').convert(absence)),
+                                // content: Text('Date: ${czDate(absence["Date"])}\nUnsolved: ${absence["Unsolved"]}\nOk: ${absence["Ok"]}\nMissed: ${absence["Missed"]}\nLate: ${absence["Late"]}\nSoon: ${absence["Soon"]}\nSchool: ${absence["School"]}\nDistance Teaching: ${absence["DistanceTeaching"]}'),
                                 actions: [TextButton(onPressed: () {Navigator.of(context).pop();}, child: const Text('Ok'))],
                               );
                             });
