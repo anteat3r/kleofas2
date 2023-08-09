@@ -8,9 +8,7 @@ import 'settings.dart';
 import 'events.dart';
 import 'menu.dart';
 import 'calendar.dart';
-import 'qr.dart';
 import 'password.dart';
-import 'library.dart';
 import 'drawing.dart';
 
 class HomePage extends StatefulWidget {
@@ -120,18 +118,8 @@ class _HomePageState extends State<HomePage> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: <IconButton>[
                   IconButton(
-                    onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const QrPage()));},
-                    icon: const Icon(Icons.qr_code_2_rounded,),
-                    iconSize: 70,
-                  ),
-                  IconButton(
                     onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const PasswordPage()));},
                     icon: const Icon(Icons.key_rounded,),
-                    iconSize: 70,
-                  ),
-                  if ((user.get('kleolibrary') ?? '').isNotEmpty) IconButton(
-                    onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const LibraryPage()));},
-                    icon: const Icon(Icons.trolley,),
                     iconSize: 70,
                   ),
                 ],

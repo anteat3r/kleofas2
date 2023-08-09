@@ -216,7 +216,6 @@ Future<void> loginUser () async {
 Future<bool> loginPb () async {
   if (!hasPassword("kleofas", "username") || !hasPassword("kleofas", "password")) return false;
   final record = await pb.collection('users').authWithPassword(getPassword("kleofas", "username"), getPassword("kleofas", "password"));
-  await user.put('kleolibrary', (record.record?.data['librarian'] ?? false) ? 'true' : '');
   await user.put('kleouserid', record.record?.id ?? '');
   return true;
 }
@@ -458,7 +457,7 @@ void showTaskDialog (BuildContext context, void Function(void Function()) setSta
                         style: const TextStyle(color: Colors.lightBlue),
                         text: file,
                         recognizer: TapAndPanGestureRecognizer()..onTapDown = (details) {
-                          launchUrl(Uri.parse('${pb.baseUrl}/api/files/library/${task['id']}/$file'), mode: LaunchMode.externalApplication);
+                          launchUrl(Uri.parse('${pb.baseUrl}/api/files/tasks/${task['id']}/$file'), mode: LaunchMode.externalApplication);
                         }
                       )),
                       if (editing) IconButton(
