@@ -126,13 +126,16 @@ class _LibraryPageState extends State<LibraryPage> {
                             children: [
                               Text(article.data['body']),
                               const Divider(),
-                              ...[for (final file in article.data['files']) RichText(text: TextSpan(
-                                style: const TextStyle(color: Colors.lightBlue),
-                                text: file,
-                                recognizer: TapAndPanGestureRecognizer()..onTapDown = (details) {
-                                  launchUrl(Uri.parse('${pb.baseUrl}/api/files/library/${article.id}/$file'));
-                                }
-                              ))],
+                              ...[for (final file in article.data['files']) Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: RichText(text: TextSpan(
+                                  style: const TextStyle(color: Colors.lightBlue),
+                                  text: file,
+                                  recognizer: TapAndPanGestureRecognizer()..onTapDown = (details) {
+                                    launchUrl(Uri.parse('${pb.baseUrl}/api/files/library/${article.id}/$file'), mode: LaunchMode.externalApplication);
+                                  }
+                                )),
+                              )],
                             ],
                           ),
                         ),
@@ -166,7 +169,7 @@ class _LibraryPageState extends State<LibraryPage> {
                                     style: const TextStyle(color: Colors.lightBlue),
                                     text: file,
                                     recognizer: TapAndPanGestureRecognizer()..onTapDown = (details) {
-                                      launchUrl(Uri.parse('${pb.baseUrl}/api/files/library/${article.id}/$file'));
+                                      launchUrl(Uri.parse('${pb.baseUrl}/api/files/library/${article.id}/$file'), mode: LaunchMode.externalApplication);
                                     }
                                   )),
                                   IconButton(
@@ -190,7 +193,7 @@ class _LibraryPageState extends State<LibraryPage> {
                                     final path = res.files.single.path;
                                     if (path == null) return;
                                     await pb.collection('library').update(article.id, files: [
-                                      http.MultipartFile.fromBytes('file', await File(path).readAsBytes(), filename: path.split('/').last)
+                                      http.MultipartFile.fromBytes('files', await File(path).readAsBytes(), filename: res.files.single.name)
                                     ]);
                                     setState(() {});
                                   });

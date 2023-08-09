@@ -1,6 +1,4 @@
 import 'dart:convert';
-
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pocketbase/pocketbase.dart';
@@ -19,7 +17,7 @@ class _SettingsPageState extends State<SettingsPage> {
   bool passwordVisible = false;
   bool autoreload = false;
   EventType eventType = EventType.my;
-  String qrpath = "";
+  // String qrpath = "";
   TextEditingController notifdurcontroller = TextEditingController();
   TextEditingController notifstartcontroller = TextEditingController();
   TextEditingController notifendcontroller = TextEditingController();
@@ -55,7 +53,7 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
     super.initState();
-    qrpath = user.get('qrpath') ?? '';
+    // qrpath = user.get('qrpath') ?? '';
     autoreload = (user.get('autoreload') ?? '').isNotEmpty;
     notifdurcontroller.text = user.get("notifdur") ?? "15";
     notifstartcontroller.text = user.get("notifstart") ?? "6";
@@ -157,20 +155,20 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Text('Qr kód'),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: OutlinedButton(
-                  onPressed: () async {
-                    final res = await FilePicker.platform.pickFiles();
-                    if (res == null) return;
-                    qrpath = res.files.single.path ?? "";
-                  },
-                  child: const Text("Vybrat soubor")),
-            ),
+            // const Padding(
+            //   padding: EdgeInsets.all(8.0),
+            //   child: Text('Qr kód'),
+            // ),
+            // Padding(
+            //   padding: const EdgeInsets.all(8.0),
+            //   child: OutlinedButton(
+            //       onPressed: () async {
+            //         final res = await FilePicker.platform.pickFiles();
+            //         if (res == null) return;
+            //         qrpath = res.files.single.path ?? "";
+            //       },
+            //       child: const Text("Vybrat soubor")),
+            // ),
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: ListTile(
@@ -348,7 +346,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     }
                     final NavigatorState navigator = Navigator.of(context);
                     await user.put('event_type', eventType.toString());
-                    await user.put('qrpath', qrpath);
+                    // await user.put('qrpath', qrpath);
                     await user.put('autoreload', autoreload ? 'true' : '');
                     await user.put('notifdur', notifdurcontroller.text);
                     await user.put('notifstart', notifstartcontroller.text);

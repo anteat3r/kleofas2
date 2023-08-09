@@ -1,13 +1,15 @@
 import 'dart:convert';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'bakalari.dart';
 import 'package:result_type/result_type.dart';
 import 'package:intl/intl.dart';
 import 'package:pocketbase/pocketbase.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/foundation.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:http/http.dart' as http;
+import 'dart:io';
 
 // UTILS
 
@@ -19,11 +21,7 @@ const Map<String, String> eventNames = {
   'EventType.public': '/public',
 };
 
-class SimpleNotif {
-  final String title;
-  final String body;
-  const SimpleNotif(this.title, [this.body = ""]);
-}
+typedef Id = ({String abbrev, String name});
 
 // T? getListDefault <T>(List<T> inputList, int idx, [T? default_]) {
 //   if (inputList.length <= idx) return default_;
@@ -65,6 +63,18 @@ dynamic jsonify (dynamic object) {
   return '<$object>';
 }
 
+extension ReplaceMap on String {
+  String replaceMap (Map<Pattern, String> replacement) {
+    String output = this;
+    replacement.forEach((key, value) {
+      output = output.replaceAll(key, value);
+    });
+    return output;
+  }
+  String replaceAppendAll (Pattern from, String replace) => replaceAll(from, '$from$replace');
+  String replaceAppendMap (Map<Pattern, String> replacement) => replaceMap(replacement.map((key, value) => MapEntry(key, '$key$value')));
+}
+
 Future<void> logInfo (List data) async {
   await log.add({
     'level': 'info',
@@ -101,7 +111,7 @@ String removeQuotes (String old) {
 }
 // STORAGE
 
-const Map<String, String> ids = {"08": "0.C", "0B": "0.J", "0C": "0.M", "05": "U21", "07": "1.J", "06": "1.M", "04": "2.C", "02": "2.J", "03": "2.M", "ZZ": "3.C", "00": "3.J", "01": "3.M", "ZW": "4.C", "ZX": "4.J", "ZY": "4.M", "ZT": "5.J", "ZS": "5.M", "ZR": "6.J", "ZQ": "6.M", "ZO": "7.J", "ZM": "7.M", "ZL": "8.J", "ZK": "8.M", "UUZFR": "Balák Ondřej", "UPZEK": "Beuzon Benoit", "UTZFE": "Frimlová Klára", "UZZAQ": "Haschková Pavla", "UOZEB": "Holíková Jolana", "UZZC3": "Holubová Ivana", "UTVCG": "Hradová Pecinová Zuzana", "UWZGC": "Chvosta Petr", "UKZD6": "Jahn Vítězslav", "UZZAS": "Jirošová Štěpánka", "UVZG4": "Kirschner Věra", "UZZC5": "Kocourková Blanka", "UWZGI": "Kocúrová Zuzana", "UTZFG": "Kolářová Magdaléna", "UWZG6": "Kubelková Natálie", "UOZE5": "Loula Karel", "UWZGB": "Lukáčová Denisa", "UWZGG": "Mádlová Zdenka", "UXZGL": "Matějka Jakub", "URZEY": "Matušík Michal", "UUZFW": "Mazná Michaela", "UWZG7": "Miškovský Jakub", "UQZEQ": "Nosková Alena", "UAPP8": "Nováková Renata", "UK8S1": "Ortinská Ludmila", "UZZ9N": "Pauchová Renata", "UZZC9": "Pavel Josef", "USZFA": "Pavlousek Pavel", "U9F2I": "Pěchová Světlana", "USZF8": "Petrová Eva", "UKZD5": "Petržílka František", "ULZDF": "Plese Conor", "UWZG8": "Procházka Marek", "UKZD3": "Prokopec Michal", "UUZFV": "Radvanová Sabina", "UTZFK": "Roček Daniel", "UZZBZ": "Růžičková Lucie", "UUZFY": "Růžičková Monika", "UZZCC": "Růžičková Václava", "UZZ9X": "Semeráková Vladimíra", "UTZFM": "Skálová Zuzana", "UKZD4": "Skoupilová Petra", "UZZCL": "Stárová Martina", "UXZGK": "Stockmann Alissia", "UKZD7": "Stříbrná Leona", "UWZGA": "Suldovská Klára", "UQZEU": "Šperl Jiří", "UQZET": "Štěchová Linda", "UDZUD": "Švarcová Dagmar", "USZF6": "Tůmová Jaroslava", "UTZFD": "Valášková Andrea", "UWZGE": "Vilímová Sheila", "UWZGD": "Vincena Petr", "UVZG3": "Wangerin Torben", "UWZG9": "Wilhelm Lukáš", "UUZFP": "Yaghobová Anna", "UUZFT": "Zajíc František", "USZFC": "Zítka Martin", "Y6": "AUL", "4E": "F", "F2": "Fit", "YL": "Fl", "0D": "Chl", "C7": "I1", "RI": "I2", "NW": "TMS", "YJ": "TSO", "30": "Tv", "YM": "U1", "0W": "U10", "GZ": "U11", "1K": "U12", "N7": "U13", "YG": "U14", "YI": "U15", "YN": "U2", "N6": "U22", "PU": "U23", "LG": "U24", "Y2": "U25", "YC": "U26", "YD": "U27", "D5": "U31", "OG": "U32", "YB": "U33", "YE": "U34", "Y7": "U35", "63": "U36", "Y9": "U37", "Y8": "U38", "2D": "U41", "PZ": "U42", "68": "U43", "YF": "U44", "YO": "Zas"};
+// const Map<String, String> ids = {"08": "0.C", "0B": "0.J", "0C": "0.M", "05": "U21", "07": "1.J", "06": "1.M", "04": "2.C", "02": "2.J", "03": "2.M", "ZZ": "3.C", "00": "3.J", "01": "3.M", "ZW": "4.C", "ZX": "4.J", "ZY": "4.M", "ZT": "5.J", "ZS": "5.M", "ZR": "6.J", "ZQ": "6.M", "ZO": "7.J", "ZM": "7.M", "ZL": "8.J", "ZK": "8.M", "UUZFR": "Balák Ondřej", "UPZEK": "Beuzon Benoit", "UTZFE": "Frimlová Klára", "UZZAQ": "Haschková Pavla", "UOZEB": "Holíková Jolana", "UZZC3": "Holubová Ivana", "UTVCG": "Hradová Pecinová Zuzana", "UWZGC": "Chvosta Petr", "UKZD6": "Jahn Vítězslav", "UZZAS": "Jirošová Štěpánka", "UVZG4": "Kirschner Věra", "UZZC5": "Kocourková Blanka", "UWZGI": "Kocúrová Zuzana", "UTZFG": "Kolářová Magdaléna", "UWZG6": "Kubelková Natálie", "UOZE5": "Loula Karel", "UWZGB": "Lukáčová Denisa", "UWZGG": "Mádlová Zdenka", "UXZGL": "Matějka Jakub", "URZEY": "Matušík Michal", "UUZFW": "Mazná Michaela", "UWZG7": "Miškovský Jakub", "UQZEQ": "Nosková Alena", "UAPP8": "Nováková Renata", "UK8S1": "Ortinská Ludmila", "UZZ9N": "Pauchová Renata", "UZZC9": "Pavel Josef", "USZFA": "Pavlousek Pavel", "U9F2I": "Pěchová Světlana", "USZF8": "Petrová Eva", "UKZD5": "Petržílka František", "ULZDF": "Plese Conor", "UWZG8": "Procházka Marek", "UKZD3": "Prokopec Michal", "UUZFV": "Radvanová Sabina", "UTZFK": "Roček Daniel", "UZZBZ": "Růžičková Lucie", "UUZFY": "Růžičková Monika", "UZZCC": "Růžičková Václava", "UZZ9X": "Semeráková Vladimíra", "UTZFM": "Skálová Zuzana", "UKZD4": "Skoupilová Petra", "UZZCL": "Stárová Martina", "UXZGK": "Stockmann Alissia", "UKZD7": "Stříbrná Leona", "UWZGA": "Suldovská Klára", "UQZEU": "Šperl Jiří", "UQZET": "Štěchová Linda", "UDZUD": "Švarcová Dagmar", "USZF6": "Tůmová Jaroslava", "UTZFD": "Valášková Andrea", "UWZGE": "Vilímová Sheila", "UWZGD": "Vincena Petr", "UVZG3": "Wangerin Torben", "UWZG9": "Wilhelm Lukáš", "UUZFP": "Yaghobová Anna", "UUZFT": "Zajíc František", "USZFC": "Zítka Martin", "Y6": "AUL", "4E": "F", "F2": "Fit", "YL": "Fl", "0D": "Chl", "C7": "I1", "RI": "I2", "NW": "TMS", "YJ": "TSO", "30": "Tv", "YM": "U1", "0W": "U10", "GZ": "U11", "1K": "U12", "N7": "U13", "YG": "U14", "YI": "U15", "YN": "U2", "N6": "U22", "PU": "U23", "LG": "U24", "Y2": "U25", "YC": "U26", "YD": "U27", "D5": "U31", "OG": "U32", "YB": "U33", "YE": "U34", "Y7": "U35", "63": "U36", "Y9": "U37", "Y8": "U38", "2D": "U41", "PZ": "U42", "68": "U43", "YF": "U44", "YO": "Zas"};
 
 final pb = PocketBase('https://pb.kleofas.eu'); 
 Box<Map> storage = Hive.box<Map>('storage');
@@ -110,6 +120,7 @@ Box<int> refresh = Hive.box<int>('refresh');
 Box<Map> passwords = Hive.box<Map>('passwords');
 Box<Map> log = Hive.box<Map>('log');
 Box<Map> snacks = Hive.box<Map>('snacks');
+Box<Map> ids = Hive.box<Map>('ids');
 
 Future<void> pushSnack (String name, String message, [Color color = Colors.lightBlue]) async => snacks.put(name, {'message': message, 'a': color.alpha, 'r': color.red, 'g': color.green, 'b': color.blue});
 Future<void> popSnack (String name) async => snacks.delete(name);
@@ -162,72 +173,15 @@ bool hasPassword (String key, String field) {
   return passwords.get(key)?[field]?["value"] != null;
 }
 
-Future<void> bgLoad () async {
-  final hour = DateTime.now().hour;
-  if (hour < (int.tryParse(user.get("notifstart") ?? "6") ?? 6) || hour > (int.tryParse(user.get("notifend") ?? "22") ?? 22)) return;
-  final oldStorage = storage.toMap();
-  logInfo(['notifkace bgload start']);
-  await completeReload();
-  final newStorage = storage.toMap();
-  List<SimpleNotif> notifsToShow = [];
-
-  // nová známka
-  final newMarksRaw = newStorage['marks']?['Subjects'] ?? [];
-  if (oldStorage["marks"] != null && newStorage["marks"] != null) {
-    final subjects = mapListToMap(newMarksRaw.map((e) => e['Subject']).toList());
-    final allOldMarks = [for (Map subject in newMarksRaw) ...subject['Marks']];
-    final allNewMarks = [for (Map subject in newStorage["Marks"]?["Subjects"] ?? []) ...subject['Marks']];
-    final changedMarks = allNewMarks.where((element) => allOldMarks.map((e) => e.toString()).contains(element.toString())).toList();
-    // logInfo(['checkování známek', allOldMarks, allNewMarks]);
-    logInfo(['změněné známky', changedMarks]);
-    for (final mark in changedMarks) {
-      logInfo(['notifikace nová známka detekována', mark]);
-      notifsToShow.add(SimpleNotif(
-        "Nová známka: ${subjects[mark['SubjectId']]?['Abbrev'] ?? '?'}",
-        "${mark['Caption']}: ${mark['MarkText']} (${mark['Weight'] == null ? mark['TypeNote'] : 'váha ${mark['Weight']}'})"
-      ));
-    }
-  }
-
-  // změna rozvrhu
-  final List oldDays = oldStorage["timetable"]?["Days"] ?? [];
-  final List newDays = newStorage["timetable"]?["Days"] ?? [];
-  if (oldDays.length == newDays.length) {
-  for (int i = 0; i < max(oldDays.length, newDays.length); i++) {
-    final oldDay = oldDays[i];
-    final newDay = newDays[i];
-    if (jsonEncode(oldDay).compareTo(jsonEncode(newDay)) != 0) {
-      logInfo(['notifikace změna rozvrhu detekována', jsonEncode(oldDay), jsonEncode(newDay)]);
-      notifsToShow.add(SimpleNotif(
-        "změna rozvrhu ${newDay['DayOfWeek']}"
-      ));
-    }
-  }
-  }
-
-  // absence
-  final List absences = newStorage["absence"]?["Absences"] ?? [];
-  for (final Map absence in absences) {
-    if (absence["Unsolved"] > 0 || absence["Missed"] > 0 || absence["Late"] > 0 || absence["Soon"] > 0) {
-      logInfo(['notifikace neomluvená absence detekována', absence, absences]);
-      notifsToShow.add(SimpleNotif(
-        "neomluvená absence ${DateFormat('EEE d. M.').format(roundDateTime(DateTime.tryParse(absence["Date"] ?? "") ?? DateTime(1969)))}"
-      ));
-    }
-  }
-
-  if (notifsToShow.isEmpty) return;
-  final localNotifs = FlutterLocalNotificationsPlugin();
-  await localNotifs.initialize(const InitializationSettings(
-    android: AndroidInitializationSettings("icon")
-  ));
-  for (final notif in notifsToShow) {
-    await localNotifs.show(0, notif.title, notif.body, const NotificationDetails(
-      android: AndroidNotificationDetails("kleofas", "Kleofáš notifikace")
-    ));
-  }
-  logInfo(['notifkace bgload start']);
+Id getId (String id, [Id defaultId = (abbrev: '?', name: '?')]) {
+  Map? loadedId = ids.get(id);
+  if (loadedId == null) return defaultId;
+  return (abbrev: loadedId['abbrev'] ?? defaultId.abbrev, name: loadedId['name'] ?? defaultId.name);
 }
+
+Future<void> setId (String id, String abbrev, String name) => ids.put(id, {'abbrev': abbrev, 'name': name});
+
+// Future<void> setIds (List<String> id, List<Id> idBody) => ids.putAll({for () id: {'abbrev': idBody.abbrev, 'name': idBody.name}});
 
 void loadingSnack (Future<void> Function() func, [String message = 'loading', Color color = Colors.lightBlue]) async {
   String snackName = DateTime.now().toIso8601String();
@@ -295,13 +249,52 @@ Future<void> loadTasks () async {
       (user.get('streams')?.isEmpty ?? true)
       ? 'false'
       : (user.get('streams') ?? "").split(' ').map((e) => 'stream = "$e"').join(' || '),
-
   );
   await Future.wait([
-    storage.put('tasks', {'Tasks': tasks.map((e) => e.data..['id'] = e.id..['expand'] = jsonify(e.expand.map((key, value) => MapEntry(key, value.map((e2) => e2.data))))).toList()}),
+    storage.put('tasks', {'Tasks': tasks.map((e) => e.data..['id'] = e.id..['expand'] = jsonify(e.expand.map((key, value) => MapEntry(key/*.replaceAll('"', '')*/, value.map((e2) => e2.data))))).toList()}),
     refresh.put('tasks', DateTime.now().millisecondsSinceEpoch)
   ]);
+  final List loadedTasks = storage.get('tasks')?['Tasks'] ?? [];
+  for (Map task in loadedTasks) {
+    setId(task['id'], task['title'], task['title']);
+    setId(task['author'], task['expand']['"author"'][0]['"username"'].replaceAll('"', ''), task['expand']['"author"'][0]['"username"'].replaceAll('"', ''));
+    setId(task['stream'], task['expand']['"stream"'][0]['"title"'].replaceAll('"', ''), task['expand']['"stream"'][0]['"title"'].replaceAll('"', ''));
+  }
 }
+
+Future<void> loadEvents ([String? url]) async {
+  await loadEndpoint('events', url ?? 'events/${user.get('event_type')?.split(".")[1] ?? "my"}');
+  final List events = storage.get('events')?['Events'] ?? [];
+  for (Map event in events) {
+    setId(event['Id'], event['Title'], event['Title']);
+    setId(event['EventType']['Id'], event['EventType']['Abbrev'], event['EventType']['Name']);
+    for (Map element in event['Classes']) { setId(element['Id'], element['Abbrev'], element['Name']); }
+    for (Map element in event['Teachers']) { setId(element['Id'], element['Abbrev'], element['Name']); }
+    for (Map element in event['Rooms']) { setId(element['Id'], element['Abbrev'], element['Name']); }
+    for (Map element in event['Students']) { setId(element['Id'], element['Abbrev'], element['Name']); }
+  }
+}
+
+Future<void> loadMarks () async {
+  await loadEndpoint('marks');
+  final List subjects = storage.get('marks')?['Subjects'] ?? [];
+  for (Map subject in subjects) {
+    setId(subject['Subject']['Id'], subject['Subject']['Abbrev'], subject['Subject']['Name']);
+    for (Map mark in subject['Marks']) {setId(mark['Id'], mark['Caption'], '${mark['Caption']} (${mark['MarkText']})');}
+  }
+}
+
+Future<void> loadTimeTable ([DateTime? date]) async {
+  await loadEndpoint('timetable', 'timetable/actual', date == null ? null : {'date': DateFormat('yyyy-MM-dd').format(date)});
+  for (Map element in storage.get('timetable')?['Classes'] ?? []) { setId(element['Id'], element['Abbrev'], element['Name']); }
+  for (Map element in storage.get('timetable')?['Groups'] ?? []) { setId(element['Id'], element['Abbrev'], element['Name']); }
+  for (Map element in storage.get('timetable')?['Subjects'] ?? []) { setId(element['Id'], element['Abbrev'], element['Name']); }
+  for (Map element in storage.get('timetable')?['Teachers'] ?? []) { setId(element['Id'], element['Abbrev'], element['Name']); }
+  for (Map element in storage.get('timetable')?['Rooms'] ?? []) { setId(element['Id'], element['Abbrev'], element['Name']); }
+  for (Map element in storage.get('timetable')?['Students'] ?? []) { setId(element['Id'], element['Abbrev'], element['Name']); }
+}
+
+Future<void> loadAbsence () => loadEndpoint('absence', 'absence/student');
 
 // LOADING HELPERS
 
@@ -315,10 +308,10 @@ Future<void> completeReload () async {
     loginPb(),
   ]);
   await Future.wait([
-    loadEndpoint('timetable', 'timetable/actual'),
-    loadEndpoint('absence', 'absence/student'),
-    loadEndpoint('marks'),
-    loadEndpoint('events', 'events/${user.get('event_type')?.split(".")[1] ?? "my"}'),
+    loadTimeTable(),
+    loadAbsence(),
+    loadMarks(),
+    loadEvents(),
     loadTasks(),
   ]);
 }
@@ -331,10 +324,29 @@ void completeReloadSnack () {
 
 // TASK UTILS
 
+Map<String, List<Map>> eventListToDateMap (List<Map> events) {
+  Map<String, List<Map>> output = {};
+  for (final event in events) {
+    final List times =
+      event.containsKey('time')
+      ? [DateTime.parse(event['time']).toIso8601String()]
+      : event['Times'].map((e) => e['StartTime'].toString()).toList();
+    for (final time in times) {
+      final String date = time.split('T')[0];
+      if (output.containsKey(date)) {
+        output[date]?.add({...event});
+      } else {
+        output[date] = [{...event}];
+      }
+    }
+  }
+  return output;
+}
+
 bool isEventInvolved (Map event, dynamic date) {
   String stringDate = date.toString();
   if (date.runtimeType == DateTime) {
-    stringDate = date.toIso8601String().split('T')[0];
+    stringDate = date.toIso8601String().split('T').first;
   }
   // print('$date -> "$stringDate"');
   if (event.containsKey('time')) {
@@ -365,56 +377,150 @@ void showTaskDialog (BuildContext context, void Function(void Function()) setSta
         final subjectController = TextEditingController(text: task?['subject'] ?? '');
         final titleController = TextEditingController(text: task?['title'] ?? '');
         final descriptionController = TextEditingController(text: task?['description'] ?? '');
+        List<PlatformFile> addedFiles = [];
+        List<String> removedFiles = [];
         return AlertDialog(
           title: task == null ? const Text('New Task') : Text(task['title']),
-          content: Column(
-            children: [
-              if (!editing) Text('Stream: $streamName'),
-              if (editing) DropdownButton<String>(
-                value: stream,
-                onChanged: (value) {
-                  if (value == null) return;
-                  stream = value;
-                },
-                items: adminStreamsMap.keys.map((e) => DropdownMenuItem(
-                  value: e,
-                  child: Text(adminStreamsMap[e] ?? '?'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (!editing) RichText(text: TextSpan(
+                  children: [
+                    const TextSpan(text: 'Stream: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                    TextSpan(text: streamName)
+                  ]
+                )),
+                if (editing) DropdownButton<String>(
+                  value: stream,
+                  onChanged: (value) {
+                    if (value == null) return;
+                    stream = value;
+                  },
+                  items: adminStreamsMap.keys.map((e) => DropdownMenuItem(
+                    value: e,
+                    child: Text(adminStreamsMap[e] ?? '?'),
+                  )).toList(),
+                ),
+                if (task?['author'] != null) RichText(text: TextSpan(
+                  children: [
+                    const TextSpan(text: 'Author: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                    TextSpan(text: removeQuotes(task!['expand']['"author"'][0]['"name"']))
+                  ]
+                )),
+                if (!editing && task?['time'] != null) RichText(text: TextSpan(
+                  children: [
+                    const TextSpan(text: 'Time: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                    TextSpan(text: DateFormat('d. M. y').format(time))
+                  ]
+                )),
+                if (editing) OutlinedButton(
+                  onPressed: () async {
+                    final newTime = await showDatePicker(
+                      context: context,
+                      initialDate: time,
+                      firstDate: DateTime(1969),
+                      lastDate: DateTime(2069)
+                    );
+                    if (newTime == null) return;
+                    dialogSetState(() {
+                      time = newTime;
+                    },);
+                  },
+                  child: Text(DateFormat('d. M. y').format(time)),
+                ),
+                if (!editing && task?['subject'] != null) RichText(text: TextSpan(
+                  children: [
+                    const TextSpan(text: 'Subject: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                    TextSpan(text: task!['subject'])
+                  ]
+                )),
+                if (editing) TextField(
+                  controller: subjectController,
+                  decoration: const InputDecoration(labelText: 'Subject'),
+                ),
+                if (!editing && task?['title'] != null) RichText(text: TextSpan(
+                  children: [
+                    const TextSpan(text: 'Title: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                    TextSpan(text: task!['title'])
+                  ]
+                )),
+                if (editing) TextField(
+                  controller: titleController,
+                  decoration: const InputDecoration(labelText: 'Title'),
+                ),
+                RichText(text: const TextSpan(text: 'Files: ', style: TextStyle(fontWeight: FontWeight.bold)),),
+                ...task?['files'].map((dynamic file) => Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Row(
+                    children: [
+                      RichText(text: TextSpan(
+                        style: const TextStyle(color: Colors.lightBlue),
+                        text: file,
+                        recognizer: TapAndPanGestureRecognizer()..onTapDown = (details) {
+                          launchUrl(Uri.parse('${pb.baseUrl}/api/files/library/${task['id']}/$file'), mode: LaunchMode.externalApplication);
+                        }
+                      )),
+                      if (editing) IconButton(
+                        onPressed: () {
+                          removedFiles.add(file);
+                          dialogSetState(() {
+                            task['files'].remove(file);
+                          },);
+                        },
+                        icon: const Icon(Icons.remove_circle_rounded)
+                      ),
+                    ],
+                  ),
+                )).toList() ?? [],
+                if (editing) RichText(text: const TextSpan(text: 'Added Files: ', style: TextStyle(fontWeight: FontWeight.bold)),),
+                if (editing) ...addedFiles.map((PlatformFile file) => Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Row(
+                    children: [
+                      Flexible(
+                        child: RichText(text: TextSpan(
+                          style: const TextStyle(color: Colors.green),
+                          text: file.name,
+                        )),
+                      ),
+                      Flexible(
+                        child: IconButton(
+                          onPressed: () {
+                            dialogSetState(() {
+                              addedFiles.remove(file);
+                            },);
+                          },
+                          icon: const Icon(Icons.remove_circle_rounded)
+                        ),
+                      ),
+                    ],
+                  ),
                 )).toList(),
-              ),
-              if (task?['author'] != null) Text('Author: ${removeQuotes(task!['expand']['"author"'][0]['"name"'])}'),
-              if (!editing && task?['time'] != null) Text('Time: ${DateFormat('d. M. y').format(time)}'),
-              if (editing) OutlinedButton(
-                onPressed: () async {
-                  final newTime = await showDatePicker(
-                    context: context,
-                    initialDate: time,
-                    firstDate: DateTime(1969),
-                    lastDate: DateTime(2069)
-                  );
-                  if (newTime == null) return;
-                  dialogSetState(() {
-                    time = newTime;
-                  },);
-                },
-                child: Text(DateFormat('d. M. y').format(time)),
-              ),
-              if (!editing && task?['subject'] != null) Text('Subject: ${task!['subject']}'),
-              if (editing) TextField(
-                controller: subjectController,
-                decoration: const InputDecoration(labelText: 'Subject'),
-              ),
-              if (!editing && task?['title'] != null) Text('Title: ${task!['title']}'),
-              if (editing) TextField(
-                controller: titleController,
-                decoration: const InputDecoration(labelText: 'Title'),
-              ),
-              if (!editing && task?['description'] != null) Text('Description: ${task!['description']}'),
-              if (editing) TextField(
-                controller: descriptionController,
-                maxLines: null,
-                decoration: const InputDecoration(labelText: 'Description'),
-              ),
-            ],
+                if (editing) IconButton(
+                  onPressed: () async {
+                    final files = await FilePicker.platform.pickFiles();
+                    if (files == null) return;
+                    dialogSetState(() {
+                      addedFiles.addAll(files.files);
+                      print(addedFiles);
+                    },);
+                  },
+                  icon: const Icon(Icons.add)
+                ),
+                if (!editing) RichText(text: TextSpan(
+                  children: [
+                    const TextSpan(text: 'Description: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                    TextSpan(text: task!['description'])
+                  ]
+                )),
+                if (editing) TextField(
+                  controller: descriptionController,
+                  maxLines: null,
+                  decoration: const InputDecoration(labelText: 'Description'),
+                ),
+              ],
+            ),
           ),
           actions: [
             if (admin && !editing) OutlinedButton(
@@ -437,7 +543,9 @@ void showTaskDialog (BuildContext context, void Function(void Function()) setSta
                     'subject': subjectController.text,
                     'title': titleController.text,
                     'description': descriptionController.text,
-                  });
+                  }, files: await Future.wait(addedFiles.map((e) async => http.MultipartFile.fromBytes(
+                    'files', await File(e.path ?? '').readAsBytes(), filename: e.name
+                  )).toList()));
                   await loadTasks();
                   navigatorState.pop();
                   setState(() {},);
@@ -457,7 +565,14 @@ void showTaskDialog (BuildContext context, void Function(void Function()) setSta
                     'subject': subjectController.text,
                     'title': titleController.text,
                     'description': descriptionController.text,
-                  });
+                  }, files: await Future.wait(addedFiles.map((e) async => http.MultipartFile.fromBytes(
+                    'files', await File(e.path ?? '').readAsBytes(), filename: e.name
+                  )).toList()));
+                  if (removedFiles.isNotEmpty) {
+                    await pb.collection('tasks').update(task['id'], body: {
+                      'files-': removedFiles,
+                    });
+                  }
                   await loadTasks();
                   navigatorState.pop();
                   setState(() {},);

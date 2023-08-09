@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'homepage.dart';
 import 'storage.dart';
+import 'bgload.dart';
 import 'package:workmanager/workmanager.dart';
 import 'dart:io';
 
@@ -14,6 +15,7 @@ void main() async {
   await Hive.openBox<Map>('passwords');
   await Hive.openBox<Map>('log');
   await Hive.openBox<Map>('snacks');
+  await Hive.openBox<Map>('ids');
   if (Platform.isAndroid || Platform.isIOS) {
     Workmanager().initialize(callbackDispatcher);
     Workmanager().registerPeriodicTask(
@@ -30,12 +32,12 @@ void callbackDispatcher () {
   Workmanager().executeTask((taskName, inputData) async {
     WidgetsFlutterBinding.ensureInitialized();
     await Hive.initFlutter();
-    await Hive.openBox<Map>('log');
     await Hive.openBox<String>('user');
     await Hive.openBox<Map>('storage');
     await Hive.openBox<int>('refresh');
     await Hive.openBox<Map>('passwords');
     await Hive.openBox<Map>('snacks');
+    await Hive.openBox<Map>('ids');
     await logInfo(['bg loading started']);
     try {
       await bgLoad();

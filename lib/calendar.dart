@@ -24,7 +24,7 @@ class CalendarPage extends StatefulWidget {
 class _CalendarPageSate extends State<CalendarPage> {
   double cellWidth = 0;
   double cellHeight = 40;
-  DateTime schoolYearStart = DateTime(DateTime.now().year - (DateTime.now().month < 8 ? 1 : 0), 9, 1);
+  DateTime schoolYearStart = DateTime(DateTime.now().year - (DateTime.now().month < 9 ? 1 : 0), 9, 1);
   ScrollController _scrollController = ScrollController();
 
   @override
@@ -35,9 +35,10 @@ class _CalendarPageSate extends State<CalendarPage> {
 
   @override
   Widget build (BuildContext context) {
-    List events = List.from(storage.get('events')?['Events'] ?? []);
-    events.addAll(storage.get('tasks')?['Tasks'] ?? []);
-    
+    List<Map> events = List.from((storage.get('events')?['Events'] ?? []));
+    List tasks = storage.get('tasks')?['Tasks'] ?? [];
+    events.addAll(tasks.map((e) => Map.from(e)).toList());
+    final mappedEvents = eventListToDateMap(events);
     cellWidth = MediaQuery.of(context).size.width / 8;
     _scrollController = ScrollController(initialScrollOffset: DateTime.now().difference(schoolYearStart).inDays.abs() ~/ 7 * cellHeight + cellHeight);
     return Scaffold(
@@ -85,7 +86,8 @@ class _CalendarPageSate extends State<CalendarPage> {
                   ...List.generate(7, (colIndex) {
                     int dayOffset = 7*rowIndex+colIndex-(schoolYearStart.weekday-1)%7;
                     DateTime date = roundDateTime(schoolYearStart.add(Duration(days: dayOffset)));
-                    List localEvents = events.where((element) => isEventInvolved(element, date),).toList();
+                    // List localEvents = events.where((element) => isEventInvolved(element, date),).toList();
+                    List<Map> localEvents = mappedEvents[date.toIso8601String().split('T').first] ?? [];
                     return SizedBox(
                       width: cellWidth,
                       height: cellHeight,

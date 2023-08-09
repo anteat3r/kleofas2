@@ -336,14 +336,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.9.1"
-  multi_snackbar:
-    dependency: "direct main"
-    description:
-      name: multi_snackbar
-      sha256: c2189896834c12ecf4f5debcd0374f6084237b82e86ba28684b6ffbe2e596e6f
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.0.0"
   path:
     dependency: transitive
     description:
@@ -606,7 +598,7 @@ packages:
     source: hosted
     version: "3.0.6"
   vector_math:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: vector_math
       sha256: "80b3257d1492ce4d091729e3a67a60407d227c27241d6927be0130c98e741803"
