@@ -13,6 +13,7 @@ class SettingsPage extends StatefulWidget {
 enum Gender { civilAttackHelicopter }
 enum EventType { my, all, public }
 
+
 class _SettingsPageState extends State<SettingsPage> {
   bool passwordVisible = false;
   bool autoreload = false;
@@ -27,6 +28,7 @@ class _SettingsPageState extends State<SettingsPage> {
   final addAdminStreamController = TextEditingController();
 
   void loadStreamTitles () async {
+    await loginPb();
     for (var key in streams.keys) {
       try {
         streams[key] = (await pb.collection('streams').getOne(key)).data['title'];
@@ -36,7 +38,6 @@ class _SettingsPageState extends State<SettingsPage> {
     }
     for (var key in adminStreams.keys) {
       try {
-        await loginPb();
         final record = await pb.collection('streams').getOne(key);
         if (!record.data['admins'].contains(pb.authStore.model.id)) {
           adminStreams[key] = 'NEJSI ADMIN';
@@ -58,11 +59,11 @@ class _SettingsPageState extends State<SettingsPage> {
     notifdurcontroller.text = user.get("notifdur") ?? "15";
     notifstartcontroller.text = user.get("notifstart") ?? "6";
     notifendcontroller.text = user.get("notifend") ?? "22";
-    streams = {for (final stream in user.get('streams')?.split(' ') ?? []) stream: ''};
+    streams = {for (final stream in user.get('streams')?.split(' ') ?? []) stream: '...'};
     if (user.get('streams')?.isEmpty ?? true) {
       streams = {};
     }
-    adminStreams = {for (final stream in user.get('adminstreams')?.split(' ') ?? []) stream: ''};
+    adminStreams = {for (final stream in user.get('adminstreams')?.split(' ') ?? []) stream: '...'};
     if (user.get('adminstreams')?.isEmpty ?? true) {
       adminStreams = {};
     }
@@ -186,6 +187,16 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             const Padding(
               padding: EdgeInsets.all(8.0),
+              child: Text('Kleofáš účet'),
+            ),
+            OutlinedButton(
+              onPressed: () {
+                showDialog(context: context, builder: (context) => const CreateNewAccountDialog(),);
+              },
+              child: const Text('Vytvořit účet')
+            ),
+            const Padding(
+              padding: EdgeInsets.all(8.0),
               child: Text('Streamy'),
             ),
             Padding(
@@ -226,15 +237,19 @@ class _SettingsPageState extends State<SettingsPage> {
                             loadStreamTitles();
                           }, icon: const Icon(Icons.add)
                         ),
+                        IconButton(onPressed: () async {
+                          final addedStream = await showQrDialog(context, 'Scan QR code of stream');
+                          if (addedStream == null) return;
+                          setState2(() {
+                            streams[addedStream] = '';
+                          });
+                          loadStreamTitles();
+                        }, icon: const Icon(Icons.qr_code_2_rounded)),
                       ],
                     ),
                   ],
                 );
               },),
-            ),
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Text('Admin Streamy'),
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
@@ -257,6 +272,13 @@ class _SettingsPageState extends State<SettingsPage> {
                             });
                           }, icon: const Icon(Icons.delete)
                         ),
+                        IconButton(
+                          onPressed: () async {
+                            final reqStream = await pb.collection('streams').getOne(stream, expand: 'admins');
+                            if (!mounted) return;
+                            showDialog(context: context, builder: (context) => EditStreamWidget(context, reqStream));
+                          }, icon: const Icon(Icons.edit)
+                        ),
                       ],
                     )).toList(),
                     Row(
@@ -276,9 +298,9 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                       ],
                     ),
-                  ],
+                  ]
                 );
-              },),
+              })
             ),
             const Padding(
               padding: EdgeInsets.all(8.0),
@@ -363,6 +385,169 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class CreateNewAccountDialog extends StatefulWidget {
+  const CreateNewAccountDialog({super.key,});
+
+  @override
+  State<CreateNewAccountDialog> createState() => _CreateNewAccountDialogState();
+}
+
+class _CreateNewAccountDialogState extends State<CreateNewAccountDialog> {
+  final usernameController = TextEditingController();
+
+  final emailController = TextEditingController();
+
+  final passwordController = TextEditingController();
+
+  final passwordConfirmController = TextEditingController();
+
+  bool emailVisible = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Vytvořit účet'),
+      content: Column(
+        children: [
+          TextField(
+            controller: usernameController,
+            decoration: const InputDecoration(labelText: 'username'),
+          ),
+          TextField(
+            controller: emailController,
+            decoration: const InputDecoration(labelText: 'email'),
+          ),
+          Switch(value: emailVisible, onChanged: (value) => setState(() {
+            emailVisible = value;
+          }),),
+          TextField(
+            controller: passwordController,
+            obscureText: true,
+            decoration: const InputDecoration(labelText: 'password'),
+          ),
+          TextField(
+            controller: passwordConfirmController,
+            obscureText: true,
+            decoration: const InputDecoration(labelText: 'confirm password'),
+          ),
+        ],
+      ),
+      actions: [
+        OutlinedButton(onPressed: () {Navigator.pop(context);}, child: const Text('Close')),
+        OutlinedButton(onPressed: () {
+          loadingSnack(() async {
+            await pb.collection('users').create(body: {
+              'username': usernameController.text,
+              'email': emailController.text,
+              'password': passwordController.text,
+              'passwordConfirm': passwordConfirmController.text,
+              'emailVisibility': emailVisible,
+              'librarian': false,
+            });
+            await passwords.put('kleofas', {
+              "title": {
+                  "value": "Kleofáš",
+                  "text": true
+              },
+              "username": {
+                  "hint": "username",
+                  "value": usernameController.text
+              },
+              "password": {
+                  "hint": "password",
+                  "secret": true,
+                  "value": passwordController.text
+              }
+            });
+            await loginPb();
+          });
+          Navigator.pop(context);
+        }, child: const Text('Done')),
+      ],
+    );
+  }
+}
+
+class EditStreamWidget extends StatefulWidget {
+  const EditStreamWidget(this.context, this.stream, {super.key});
+
+  final RecordModel stream;
+  final BuildContext context;
+
+  @override
+  State<EditStreamWidget> createState() => _EditStreamWidgetState();
+}
+
+class _EditStreamWidgetState extends State<EditStreamWidget> {
+
+  final titleController = TextEditingController();
+  final addAdminController = TextEditingController();
+  List<RecordModel> admins = [];
+
+  @override
+  void initState() {
+    super.initState();
+    titleController.text = widget.stream.data['title'];
+    admins = widget.stream.expand['admins'] ?? [];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Edit stream ${widget.stream.data['title']}'),
+      actions: [
+        OutlinedButton(onPressed: () {Navigator.pop(context);}, child: const Text('Close')),
+        OutlinedButton(onPressed: () {
+          loadingSnack(() async {
+            await pb.collection('streams').update(widget.stream.id, body: {
+              'title': titleController.text,
+              'admins': admins.map((e) => e.id).toList(),
+            });
+          });
+          Navigator.pop(context);
+        }, child: const Text('Done')),
+      ],
+      content: Column(
+        children: [
+          TextField(
+            controller: titleController,
+            decoration: const InputDecoration(labelText: 'Title'),
+          ),
+          const Text('Admins:'),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: addAdminController,
+                  decoration: const InputDecoration(labelText: 'Add admin'),
+                ),
+              ),
+              IconButton(onPressed: () {
+                loadingSnack(() async {
+                  final reqUsers = await pb.collection('users').getFullList(filter: 'username = "${addAdminController.text}"');
+                  if (reqUsers.isEmpty) {
+                    globalShowWarning('User not found', 'User ${addAdminController.text} was not found.');
+                    return; 
+                  }
+                  setState(() {
+                    admins.add(reqUsers.first);
+                  });
+                });
+              }, icon: const Icon(Icons.add)),
+            ],
+          ),
+          ...admins.map((admin) => Row(
+            children: [
+              Text(admin.data['username']),
+              IconButton(onPressed: () {}, icon: const Icon(Icons.remove_circle_outline)),
+            ],
+          )),
+        ],
       ),
     );
   }

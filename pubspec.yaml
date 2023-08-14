@@ -25,6 +25,8 @@ dependencies:
   path_provider: ^2.0.15
   url_launcher: ^6.1.11
   flutter_colorpicker: ^1.0.3
+  mobile_scanner: ^3.4.1
+  image_picker: ^1.0.2
 
 dev_dependencies:
   flutter_test:

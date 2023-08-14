@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:io';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
 // UTILS
 
@@ -42,6 +43,14 @@ void globalShowDialog (Widget Function(BuildContext) builder) {
   final currentContext = navigatorKey.currentState?.overlay?.context;
   if (currentContext == null) return;
   showDialog(context: currentContext, builder: builder);
+}
+
+void globalShowWarning (String title, String body) {
+  globalShowDialog((context) => AlertDialog(
+    title: Text(title),
+    content: Text(body),
+    actions: [OutlinedButton(onPressed: () {Navigator.pop(context);}, child: const Text('Close'))],
+  ));
 }
 
 dynamic jsonify (dynamic object) {
@@ -109,6 +118,25 @@ String removeQuotes (String old) {
   }
   return old;
 }
+
+Future<String?> showQrDialog (BuildContext context, String title) {
+  if (Platform.isLinux || Platform.isWindows) return Future.value(null);
+  return showDialog<String>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(title),
+      actions: [
+        OutlinedButton(onPressed: () {Navigator.pop(context);}, child: const Text('Cancel'))
+      ],
+      content: MobileScanner(
+        onDetect: (barcodes) {
+          Navigator.pop(context, barcodes.barcodes.first.rawValue);
+        },
+      ),
+    ),
+  );
+}
+
 // STORAGE
 
 // const Map<String, String> ids = {"08": "0.C", "0B": "0.J", "0C": "0.M", "05": "U21", "07": "1.J", "06": "1.M", "04": "2.C", "02": "2.J", "03": "2.M", "ZZ": "3.C", "00": "3.J", "01": "3.M", "ZW": "4.C", "ZX": "4.J", "ZY": "4.M", "ZT": "5.J", "ZS": "5.M", "ZR": "6.J", "ZQ": "6.M", "ZO": "7.J", "ZM": "7.M", "ZL": "8.J", "ZK": "8.M", "UUZFR": "Balák Ondřej", "UPZEK": "Beuzon Benoit", "UTZFE": "Frimlová Klára", "UZZAQ": "Haschková Pavla", "UOZEB": "Holíková Jolana", "UZZC3": "Holubová Ivana", "UTVCG": "Hradová Pecinová Zuzana", "UWZGC": "Chvosta Petr", "UKZD6": "Jahn Vítězslav", "UZZAS": "Jirošová Štěpánka", "UVZG4": "Kirschner Věra", "UZZC5": "Kocourková Blanka", "UWZGI": "Kocúrová Zuzana", "UTZFG": "Kolářová Magdaléna", "UWZG6": "Kubelková Natálie", "UOZE5": "Loula Karel", "UWZGB": "Lukáčová Denisa", "UWZGG": "Mádlová Zdenka", "UXZGL": "Matějka Jakub", "URZEY": "Matušík Michal", "UUZFW": "Mazná Michaela", "UWZG7": "Miškovský Jakub", "UQZEQ": "Nosková Alena", "UAPP8": "Nováková Renata", "UK8S1": "Ortinská Ludmila", "UZZ9N": "Pauchová Renata", "UZZC9": "Pavel Josef", "USZFA": "Pavlousek Pavel", "U9F2I": "Pěchová Světlana", "USZF8": "Petrová Eva", "UKZD5": "Petržílka František", "ULZDF": "Plese Conor", "UWZG8": "Procházka Marek", "UKZD3": "Prokopec Michal", "UUZFV": "Radvanová Sabina", "UTZFK": "Roček Daniel", "UZZBZ": "Růžičková Lucie", "UUZFY": "Růžičková Monika", "UZZCC": "Růžičková Václava", "UZZ9X": "Semeráková Vladimíra", "UTZFM": "Skálová Zuzana", "UKZD4": "Skoupilová Petra", "UZZCL": "Stárová Martina", "UXZGK": "Stockmann Alissia", "UKZD7": "Stříbrná Leona", "UWZGA": "Suldovská Klára", "UQZEU": "Šperl Jiří", "UQZET": "Štěchová Linda", "UDZUD": "Švarcová Dagmar", "USZF6": "Tůmová Jaroslava", "UTZFD": "Valášková Andrea", "UWZGE": "Vilímová Sheila", "UWZGD": "Vincena Petr", "UVZG3": "Wangerin Torben", "UWZG9": "Wilhelm Lukáš", "UUZFP": "Yaghobová Anna", "UUZFT": "Zajíc František", "USZFC": "Zítka Martin", "Y6": "AUL", "4E": "F", "F2": "Fit", "YL": "Fl", "0D": "Chl", "C7": "I1", "RI": "I2", "NW": "TMS", "YJ": "TSO", "30": "Tv", "YM": "U1", "0W": "U10", "GZ": "U11", "1K": "U12", "N7": "U13", "YG": "U14", "YI": "U15", "YN": "U2", "N6": "U22", "PU": "U23", "LG": "U24", "Y2": "U25", "YC": "U26", "YD": "U27", "D5": "U31", "OG": "U32", "YB": "U33", "YE": "U34", "Y7": "U35", "63": "U36", "Y9": "U37", "Y8": "U38", "2D": "U41", "PZ": "U42", "68": "U43", "YF": "U44", "YO": "Zas"};
@@ -173,7 +201,8 @@ bool hasPassword (String key, String field) {
   return passwords.get(key)?[field]?["value"] != null;
 }
 
-Id getId (String id, [Id defaultId = (abbrev: '?', name: '?')]) {
+Id getId (String? id, [Id defaultId = (abbrev: '?', name: '?')]) {
+  if (id == null) return defaultId;
   Map? loadedId = ids.get(id);
   if (loadedId == null) return defaultId;
   return (abbrev: loadedId['abbrev'] ?? defaultId.abbrev, name: loadedId['name'] ?? defaultId.name);
@@ -214,20 +243,19 @@ Future<void> loginUser () async {
 }
 
 Future<bool> loginPb () async {
+  if (pb.authStore.isValid) return true;
   if (!hasPassword("kleofas", "username") || !hasPassword("kleofas", "password")) return false;
   final record = await pb.collection('users').authWithPassword(getPassword("kleofas", "username"), getPassword("kleofas", "password"));
   await user.put('kleouserid', record.record?.id ?? '');
   return true;
 }
 
-Future<void> loadEndpoint (String endpoint, [String? url, Map<String, dynamic>? payload]) async {
+Future<void> loadEndpoint (String endpoint, [String? url, Map<String, dynamic>? payload, bool secondAttempt = false]) async {
   Result res = await query(getPassword("bakalari", "url"), user.get('token') ?? '', url ?? endpoint, payload);
   if (res.isFailure) {
-    Result token = await login(getPassword("bakalari", "url"), getPassword("bakalari", "username"), getPassword("bakalari", "password"));
-    if (token.isFailure) {
-      throw AssertionError(res.failure);
-    }
-    await user.put('token', token.success);
+    if (secondAttempt) throw AssertionError(res.failure);
+    await loginUser();
+    loadEndpoint(endpoint, url, payload, true);
     return;
   }
   if (res.isSuccess) {
@@ -359,6 +387,8 @@ void showTaskDialog (BuildContext context, void Function(void Function()) setSta
   showDialog(context: context, builder: (context) {
     bool admin = false;
     bool editing = !(task?.containsKey('author') ?? false);
+    List<PlatformFile> addedFiles = [];
+    List<String> removedFiles = [];
     return StatefulBuilder(
       builder: (context, dialogSetState) {
         String? stream = task?['stream'];
@@ -376,8 +406,6 @@ void showTaskDialog (BuildContext context, void Function(void Function()) setSta
         final subjectController = TextEditingController(text: task?['subject'] ?? '');
         final titleController = TextEditingController(text: task?['title'] ?? '');
         final descriptionController = TextEditingController(text: task?['description'] ?? '');
-        List<PlatformFile> addedFiles = [];
-        List<String> removedFiles = [];
         return AlertDialog(
           title: task == null ? const Text('New Task') : Text(task['title']),
           content: SingleChildScrollView(
@@ -472,47 +500,57 @@ void showTaskDialog (BuildContext context, void Function(void Function()) setSta
                     ],
                   ),
                 )).toList() ?? [],
-                if (editing) RichText(text: const TextSpan(text: 'Added Files: ', style: TextStyle(fontWeight: FontWeight.bold)),),
-                if (editing) ...addedFiles.map((PlatformFile file) => Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    children: [
-                      Flexible(
-                        child: RichText(text: TextSpan(
-                          style: const TextStyle(color: Colors.green),
-                          text: file.name,
-                        )),
-                      ),
-                      Flexible(
-                        child: IconButton(
-                          onPressed: () {
-                            dialogSetState(() {
-                              addedFiles.remove(file);
-                            },);
-                          },
-                          icon: const Icon(Icons.remove_circle_rounded)
-                        ),
-                      ),
-                    ],
-                  ),
-                )).toList(),
-                if (editing) IconButton(
-                  onPressed: () async {
-                    final files = await FilePicker.platform.pickFiles();
-                    if (files == null) return;
-                    dialogSetState(() {
-                      addedFiles.addAll(files.files);
-                      print(addedFiles);
-                    },);
-                  },
-                  icon: const Icon(Icons.add)
-                ),
-                if (!editing) RichText(text: TextSpan(
+                if (editing) Row(
                   children: [
-                    const TextSpan(text: 'Description: ', style: TextStyle(fontWeight: FontWeight.bold)),
-                    TextSpan(text: task!['description'])
-                  ]
-                )),
+                    RichText(text: const TextSpan(text: 'Added Files: ', style: TextStyle(fontWeight: FontWeight.bold), ),),
+                    IconButton(
+                      onPressed: () async {
+                        final files = await FilePicker.platform.pickFiles();
+                        if (files == null) return;
+                        dialogSetState(() {
+                          addedFiles.addAll(files.files);
+                        },);
+                      },
+                      icon: const Icon(Icons.add)
+                    ),
+                  ],
+                ),
+                if (editing) ...addedFiles.map((PlatformFile file) => Row(
+                  children: [
+                    Flexible(
+                      child: RichText(text: TextSpan(
+                        style: const TextStyle(color: Colors.green),
+                        text: file.name,
+                      )),
+                    ),
+                    Flexible(
+                      child: IconButton(
+                        onPressed: () {
+                          dialogSetState(() {
+                            addedFiles.remove(file);
+                          },);
+                        },
+                        icon: const Icon(Icons.remove_circle_rounded)
+                      ),
+                    ),
+                  ],
+                )).toList(),
+                if (!editing) Row(
+                  children: [
+                    Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [RichText(text: TextSpan(
+                          children: [
+                            const TextSpan(text: 'Description: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                            TextSpan(text: task!['description'])
+                          ]
+                        )),]
+                      ),
+                    ),
+                  ],
+                ),
                 if (editing) TextField(
                   controller: descriptionController,
                   maxLines: null,

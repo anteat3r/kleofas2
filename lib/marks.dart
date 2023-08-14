@@ -73,7 +73,7 @@ class _MarksPageState extends State<MarksPage> {
                               return AlertDialog(
                                 title: const Text('Subject'),
                                 // content: Text('Average Text: ${subjectMarks["AverageText"]}\nTemporary Mark: ${subjectMarks["TemporaryMark"]}\nSubject Note: ${subjectMarks["SubjectNote"]}\nTemporary Mark Note: ${subjectMarks["TemporaryMarkNote"]}\nPoints Only: ${subjectMarks["PointsOnly"]}\nMark Prediction Enabled: ${subjectMarks["MarkPredictionEnabled"]}'),//Text('Mark Date: ${czDate(subjectMarks["MarkDate"])}\nEdit Date: ${czDate(subjectMarks["EditDate"])}\nCaption: ${subjectMarks["Caption"]}\nMark Text: ${subjectMarks["Marktext"]}\nType: ${subjectMarks["Type"]}\nSubject: ${subjectMarks["SubjectId"]}\nTeacher: ${subjectMarks["TeacherId"]}\nTheme: ${subjectMarks["Theme"]}\nIs Invalid Date: ${subjectMarks["IsInvalidDate"]}\nType Note: ${subjectMarks["TypeNote"]}\nWeight: ${subjectMarks["Weight"]}\nIs New: ${subjectMarks["IsNew"]}\nIs Points: ${subjectMarks["IsPoints"]}\nCalculated Mark Text: ${subjectMarks["CalculatedMarkText"]}\nClass RankText: ${subjectMarks["ClassRankText"]}\nId: ${subjectMarks["Id"]}\nPoints Text: ${subjectMarks["PointsText"]}\nMax Points: ${subjectMarks["MaxPoints"]}'),
-                                content: Text(const JsonEncoder.withIndent('    ').convert(subjectMarks)),
+                                content: SingleChildScrollView(child: Text(const JsonEncoder.withIndent('    ').convert({...subjectMarks}..remove('Marks')))),
                                 actions: [TextButton(onPressed: () {Navigator.of(context).pop();}, child: const Text('Ok'))],
                               );
                             });
@@ -115,7 +115,10 @@ class _MarksPageState extends State<MarksPage> {
                               return AlertDialog(
                                 title: const Text('Mark'),
                                 // content: Text('Mark Date: ${czDate(mark["MarkDate"])}\nEdit Date: ${czDate(mark["EditDate"])}\nCaption: ${mark["Caption"]}\nMark Text: ${mark["MarkText"]}\nType: ${mark["Type"]}\nSubject: ${subjects[mark['SubjectId']]?['Name']}\nTeacher: ${ids[mark["TeacherId"]]}\nTheme: ${mark["Theme"]}\nIs Invalid Date: ${mark["IsInvalidDate"]}\nType Note: ${mark["TypeNote"]}\nWeight: ${mark["Weight"]}\nIs New: ${mark["IsNew"]}\nIs Points: ${mark["IsPoints"]}\nCalculated Mark Text: ${mark["CalculatedMarkText"]}\nClass RankText: ${mark["ClassRankText"]}\nId: ${mark["Id"]}\nPoints Text: ${mark["PointsText"]}\nMax Points: ${mark["MaxPoints"]}'),
-                                content: Text(jsonEncode(mark)),
+                                content: SingleChildScrollView(child: Text(const JsonEncoder.withIndent('    ').convert(mark)
+                                  .replaceAppendAll('"${mark['TeacherId'] ?? 'BRUH'}"', ' - "${getId(mark['TeacherId']).name}"')
+                                  .replaceAppendAll('"${mark['SubjectId'] ?? 'BRUH'}"', ' - "${getId(mark['SubjectId']).name}"')
+                                )),
                                 actions: [TextButton(onPressed: () {Navigator.of(context).pop();}, child: const Text('Ok'))],
                               );
                             });

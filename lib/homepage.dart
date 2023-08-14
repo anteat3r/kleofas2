@@ -10,6 +10,7 @@ import 'menu.dart';
 import 'calendar.dart';
 import 'password.dart';
 import 'drawing.dart';
+import 'user.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -34,16 +35,10 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Main menu'),
-        actions: [
-          const IconButton(
+        actions: const [
+          IconButton(
             onPressed: completeReloadSnack,
             icon: Icon(Icons.refresh_rounded)
-          ),
-          IconButton(
-            onPressed: () {
-              loadingSnack(() => loadTasks(), 'loading tasks');
-            },
-            icon: const Icon(Icons.ac_unit_rounded),
           ),
         ],
       ),
@@ -120,6 +115,11 @@ class _HomePageState extends State<HomePage> {
                   IconButton(
                     onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const PasswordPage()));},
                     icon: const Icon(Icons.key_rounded,),
+                    iconSize: 70,
+                  ),
+                  if (hasPassword('kleofas', 'password')) IconButton(
+                    onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const UserPage()));},
+                    icon: const Icon(Icons.account_circle_rounded,),
                     iconSize: 70,
                   ),
                 ],

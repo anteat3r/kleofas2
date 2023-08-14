@@ -223,8 +223,12 @@ class _PasswordPageState extends State<PasswordPage> {
               }).values);
             }).values.expand((i) => i).toList(),
             OutlinedButton(
-              onPressed: () {
-                passwords.putAll(localPasses);
+              onPressed: () async {
+                loadingSnack(() async {
+                  await passwords.putAll(localPasses);
+                  await loginPb();
+                  await loginUser();
+                });
                 Navigator.of(context).pop();
               },
               child: const Text("Save")

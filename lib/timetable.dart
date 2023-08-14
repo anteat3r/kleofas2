@@ -80,7 +80,7 @@ class _TimetablePageState extends State<TimetablePage> {
             return AlertDialog(
               title: const Text('Den'),
               // content: Text('Datum: ${czDate(day["Date"])}\nPopis: ${day["DayDescription"]}\nTyp: ${day["DayType"]}'),
-              content: Text(jsonEncode(day)),
+              content: Text(const JsonEncoder.withIndent('    ').convert({...day}..remove('Atoms'))),
               actions: [
                 TextButton(onPressed: () {Navigator.pop(context);}, child: const Text('Ok'))
               ],
@@ -139,10 +139,13 @@ class _TimetablePageState extends State<TimetablePage> {
             return AlertDialog(
               title: const Text('Hodina'),
               // content: Text('Skupiny: ${hour["GroupIds"]?.map((item) => groups[item]["Abbrev"]).join(" ")}\nPředmět: ${subjects[hour["SubjectId"]]?["Name"]}\nUčitel: ${teachers[hour["TeacherId"]]?["Name"]}\nUčebna: ${rooms[hour["RoomId"]]?["Abbrev"]}\nTéma: ${hour["Theme"]}\nZměna: ${hour["Change"] == null ? '' : '\n  Změna předmětu: ${hour["Change"]["ChangeSubject"]}\n  Den: ${czDate(hour["Change"]["Day"])}\n  Hodiny: ${hour["Change"]["Hours"]}\n  Typ změny: ${hour["Change"]["ChangeType"]}\n  Popis: ${hour["Change"]["Description"]}\n  Čas: ${hour["Change"]["Time"]}\n  Zkratka typu: ${hour["Change"]["TypeAbbrev"]}\n  Název typu: ${hour["Change"]["TypeName"]}'}'),
-              content: Text(const JsonEncoder.withIndent('    ').convert(hour)
-                .replaceAppendAll('"${hour['TeacherId']}"', '"${getId(hour['TeacherId']).name}"')
-                .replaceAppendAll('"${hour['RoomId']}"', '"${getId(hour['RoomId']).abbrev}"')
-                .replaceAppendMap({for (String groupId in hour['GroupIds']) '"groupId"': ' - "${getId(groupId).abbrev}"'})
+              content: SingleChildScrollView(
+                child: Text(const JsonEncoder.withIndent('    ').convert(hour)
+                  .replaceAppendAll('"${hour['TeacherId'] ?? 'BRUHHHHHHHHHH'}"', ' - "${getId(hour['TeacherId']).name}"')
+                  .replaceAppendAll('"${hour['RoomId'] ?? 'BRUHHHHHHHHHH'}"', ' - "${getId(hour['RoomId']).abbrev}"')
+                  .replaceAppendAll('"${hour['SubjectId'] ?? 'BRUHHHHHHHHHH'}"', ' - "${getId(hour['SubjectId']).name}"')
+                  .replaceAppendMap({for (String groupId in hour['GroupIds'] ?? []) '"$groupId"': ' - "${getId(groupId).abbrev}"'})
+                ),
               ),
               actions: [
                 TextButton(onPressed: () {Navigator.pop(context);}, child: const Text('Ok'))
