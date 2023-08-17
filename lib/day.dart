@@ -4,7 +4,8 @@ import 'events.dart';
 import 'package:intl/intl.dart';
 import 'storage.dart';
 import 'dart:math';
-import 'package:flutter/foundation.dart';
+import 'dart:convert';
+// import 'package:flutter/foundation.dart';
 
 const List<String> czWeekDayNames = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'];
 
@@ -209,14 +210,17 @@ class _DayPageSate extends State<DayPage> {
         child: Column(
           // crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (widget.date.weekday < 6 && !timeTableLoaded) OutlinedButton(
-              onPressed: () {
-                loadEndpointSnack('timetable:temp', url: 'timetable/actual', payload: {'date': DateFormat('yyyy-MM-dd').format(widget.date)});
-                setState(() {
-                  timeTableLoaded = true;
-                });
-              },
-              child: const Text('Načíst rozvrh')
+            if (widget.date.weekday < 6 && !timeTableLoaded) Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: OutlinedButton(
+                onPressed: () {
+                  loadEndpointSnack('timetable:temp', url: 'timetable/actual', payload: {'date': DateFormat('yyyy-MM-dd').format(widget.date)});
+                  setState(() {
+                    timeTableLoaded = true;
+                  });
+                },
+                child: const Text('Načíst rozvrh')
+              ),
             ),
             if (timeTableLoaded) ValueListenableBuilder(
             valueListenable: storage.listenable(),
@@ -224,23 +228,20 @@ class _DayPageSate extends State<DayPage> {
               List getElem (String name) => value.get('timetable:temp')?[name] ?? [];
               List hours = getElem('Hours');
               List days = getElem('Days');
-              if (kDebugMode) {
-                print(days);
-              }
               // hours = hours.sublist(max(0, hours.indexWhere((element) => days[widget.date.weekday-1]['Atoms'].any((atom) => atom['HourId'] == element['Id']))), hours.lastIndexWhere((element) => days[widget.date.weekday-1]['Atoms'].any((atom) => atom['HourId'] == element['Id'])) + 1);
               hours = hours.sublist(max(0, hours.indexWhere((element) => days.any((day) => day['Atoms'].any((atom) => atom['HourId'] == element['Id'])))), hours.lastIndexWhere((element) => days.any((day) => day['Atoms'].any((atom) => atom['HourId'] == element['Id']))) + 1);
               if (hours.isEmpty) {
                 return Text('${days[widget.date.weekday-1]['DayType']}: ${days[widget.date.weekday-1]['DayDescription']}');
               }
-              Map groups = mapListToMap(getElem('Groups'));
+              // Map groups = mapListToMap(getElem('Groups'));
               Map subjects = mapListToMap(getElem('Subjects'));
-              Map teachers = mapListToMap(getElem('Teachers'));
+              // Map teachers = mapListToMap(getElem('Teachers'));
               Map rooms = mapListToMap(getElem('Rooms'));
               return SizedBox(
-                width: MediaQuery.of(context).size.width/10*hours.length,
+                width: min(MediaQuery.of(context).size.width/10, 50.0)*hours.length,
                 child: Table(
                   children: List.generate(5, (index) {
-                    double height = MediaQuery.of(context).size.width/10;
+                    double height = min(MediaQuery.of(context).size.width/10, 50.0);
                     bool current = widget.date.weekday == index+1;
                     return TableRow(
                       children: [
@@ -294,7 +295,13 @@ class _DayPageSate extends State<DayPage> {
                                   showDialog(context: context, builder: (BuildContext context) {
                                     return AlertDialog(
                                       title: const Text('Hodina'),
-                                      content: Text('Skupiny: ${hour["GroupIds"]?.map((item) => groups[item]["Abbrev"]).join(" ")}\nPředmět: ${subjects[hour["SubjectId"]]?["Name"]}\nUčitel: ${teachers[hour["TeacherId"]]?["Name"]}\nUčebna: ${rooms[hour["RoomId"]]?["Name"]}\nTéma: ${hour["Theme"]}\nZměna: ${hour["Change"] == null ? '' : '\n  Změna předmětu: ${hour["Change"]["ChangeSubject"]}\n  Den: ${czDate(hour["Change"]["Day"])}\n  Hodiny: ${hour["Change"]["Hours"]}\n  Typ změny: ${hour["Change"]["ChangeType"]}\n  Popis: ${hour["Change"]["Description"]}\n  Čas: ${hour["Change"]["Time"]}\n  Zkratka typu: ${hour["Change"]["TypeAbbrev"]}\n  Název typu: ${hour["Change"]["TypeName"]}'}'),
+                                      // content: Text('Skupiny: ${hour["GroupIds"]?.map((item) => groups[item]["Abbrev"]).join(" ")}\nPředmět: ${subjects[hour["SubjectId"]]?["Name"]}\nUčitel: ${teachers[hour["TeacherId"]]?["Name"]}\nUčebna: ${rooms[hour["RoomId"]]?["Name"]}\nTéma: ${hour["Theme"]}\nZměna: ${hour["Change"] == null ? '' : '\n  Změna předmětu: ${hour["Change"]["ChangeSubject"]}\n  Den: ${czDate(hour["Change"]["Day"])}\n  Hodiny: ${hour["Change"]["Hours"]}\n  Typ změny: ${hour["Change"]["ChangeType"]}\n  Popis: ${hour["Change"]["Description"]}\n  Čas: ${hour["Change"]["Time"]}\n  Zkratka typu: ${hour["Change"]["TypeAbbrev"]}\n  Název typu: ${hour["Change"]["TypeName"]}'}'),
+                                      content: Text(const JsonEncoder.withIndent('    ').convert(hour)
+                                        .replaceAppendAll('"${hour['TeacherId'] ?? 'BRUHHHHHHHHHH'}"', ' - "${getId(hour['TeacherId']).name}"')
+                                        .replaceAppendAll('"${hour['RoomId'] ?? 'BRUHHHHHHHHHH'}"', ' - "${getId(hour['RoomId']).abbrev}"')
+                                        .replaceAppendAll('"${hour['SubjectId'] ?? 'BRUHHHHHHHHHH'}"', ' - "${getId(hour['SubjectId']).name}"')
+                                        .replaceAppendMap({for (String groupId in hour['GroupIds'] ?? []) '"$groupId"': ' - "${getId(groupId).abbrev}"'})
+                                      ),
                                       actions: [
                                         TextButton(onPressed: () {Navigator.pop(context);}, child: const Text('Ok'))
                                       ],
@@ -308,7 +315,9 @@ class _DayPageSate extends State<DayPage> {
                                   backgroundColor: MaterialStatePropertyAll(
                                     hour?['Change'] != null
                                     ? (current
-                                      ? Colors.lightBlue
+                                      ? ( hour?['Change']?['TypeAbbrev'] == null
+                                        ? Colors.lightBlue
+                                        : Colors.lightBlue.shade600 )
                                       : Colors.grey.shade700
                                     )
                                     : hour == null || hour['TeacherId'] == null
@@ -323,7 +332,7 @@ class _DayPageSate extends State<DayPage> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Text(
-                                      (hour == null || hour['TeacherId'] == null) ? '' : subjects[hour['SubjectId']]?['Abbrev'] ?? '?',
+                                      (hour == null || hour['TeacherId'] == null) ? (hour?["Change"]?["TypeAbbrev"] ?? '') : subjects[hour['SubjectId']]?['Abbrev'] ?? 'null',
                                       style: const TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w700
@@ -351,33 +360,52 @@ class _DayPageSate extends State<DayPage> {
           ),
           const Divider(),
           ...[ for (Map event in events)
-            ElevatedButton(
-              style: const ButtonStyle(
-                padding: MaterialStatePropertyAll(EdgeInsets.all(10))
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ElevatedButton(
+                style: const ButtonStyle(
+                  padding: MaterialStatePropertyAll(EdgeInsets.all(10))
+                ),
+                onPressed: () {
+                  if (event.containsKey('time')) {
+                    showTaskDialog(context, setState, task: event);
+                  } else {
+                    showDialog(context: context, builder: (BuildContext context) => AlertDialog(
+                      title: Text(event['Title'].toString()),
+                      content: eventWidget(context, event),
+                      actions: [
+                        OutlinedButton(onPressed: () {Navigator.pop(context);}, child: const Text('Close')),
+                      ],
+                    ));
+                  }
+                },
+                onLongPress: () {
+                  if (event.containsKey('time')) {
+                    showTaskDialog(context, setState, task: event);
+                  } else {
+                    showDialog(context: context, builder: (context) => eventDialog(event, context));
+                  }
+                },
+                child: Row(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Icon(event.containsKey('time') ? Icons.tornado_rounded : Icons.event, size: 30,),
+                    ),
+                    Expanded(child: Text((event.containsKey('time') ? '${event['subject'] ?? '?'} - ' : '') + (event.containsKey('time') ? event['title'] : event['Title']), style: const TextStyle(fontSize: 14), overflow: TextOverflow.ellipsis, maxLines: 1,))
+                  ],
+                )
               ),
-              onPressed: () {
-                if (event.containsKey('time')) {
-                  showTaskDialog(context, setState, task: event);
-                } else {
-                  showDialog(context: context, builder: (BuildContext context) => eventDialog(event, context));
-                }
-              },
-              child: Row(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: Icon(event.containsKey('time') ? Icons.tornado_rounded : Icons.event, size: 30,),
-                  ),
-                  Expanded(child: Text((event.containsKey('time') ? '${event['subject'] ?? '?'} - ' : '') + (event.containsKey('time') ? event['title'] : event['Title']), style: const TextStyle(fontSize: 14), overflow: TextOverflow.ellipsis, maxLines: 1,))
-                ],
-              )
             )
           ],
-          OutlinedButton(
-            onPressed: () {
-              showTaskDialog(context, setState, newTime: widget.date);
-            },
-            child: const Text("Přidat task")
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: OutlinedButton(
+              onPressed: () {
+                showTaskDialog(context, setState, newTime: widget.date);
+              },
+              child: const Text("Přidat task"),
+            ),
           )
           ],
         ),

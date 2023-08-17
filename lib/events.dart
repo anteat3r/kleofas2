@@ -164,126 +164,7 @@ class _EventsPageState extends State<EventsPage> {
                     return [
                       Padding(
                         padding: const EdgeInsets.only(left: 8.0, right: 8.0, top: 5.0),
-                        child: OutlinedButton(
-                          style: ButtonStyle(
-                            textStyle: MaterialStatePropertyAll(TextStyle(
-                              foreground: Paint()..color = Colors.white
-                            )),
-                          ),
-                          onPressed: () {
-                            showDialog(context: context, builder: (BuildContext context) => eventDialog(event, context));
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.only(
-                              top: 6.0,
-                              right: 6.0,
-                              bottom: 6.0,
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: <Widget>[
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 8.0),
-                                  child: Text(
-                                    event['Title'].toString(),
-                                    style: const TextStyle(
-                                      fontSize: 30,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 8.0),
-                                  child: Text(
-                                    event['Description'].toString(),
-                                  ), // style: TextStyle(fontSize: 30, fontWeight: FontWeight.w500, foreground: Paint()..color = Colors.red),),
-                                ),
-                                ...List.generate(event['Times'].length,
-                                    (index) {
-                                  Map time = event['Times'][index];
-                                  if (time['WholeDay']) {
-                                    return Padding(
-                                      padding: const EdgeInsets.only(top: 8.0, bottom: 8.0, right: 8.0),
-                                      child: DayWidget(DateTime.parse(time['StartTime']).toLocal())
-                                      // child: Text(time['StartTime'])); 
-                                    );
-                                  } else {
-                                    return Padding(
-                                      padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-                                      child: Wrap(
-                                        crossAxisAlignment: WrapCrossAlignment.center,
-                                        children: [
-                                          DayWidget(DateTime.parse(time['StartTime']).toLocal()),
-                                          Text('     ${DateFormat('HH : mm').format(DateTime.parse(time['StartTime']).toLocal())} - ${DateFormat('HH : MM').format(DateTime.parse(time['EndTime']).toLocal())}'),
-                                        ],
-                                      )
-                                    );
-                                  }
-                                }),
-                                if (event['Teachers'].isNotEmpty) RichText(
-                                  text: TextSpan(
-                                    children: [
-                                      const TextSpan(
-                                        text: 'Učitelé: ',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold
-                                        ),
-                                      ),
-                                      TextSpan(
-                                        text: event['Teachers'].map((e) => e['Name']).join(', '),
-                                      )
-                                    ]
-                                  )
-                                ),
-                                if (event['Classes'].isNotEmpty) RichText(
-                                  text: TextSpan(
-                                    children: [
-                                      const TextSpan(
-                                        text: 'Třídy: ',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold
-                                        ),
-                                      ),
-                                      TextSpan(
-                                        text: event['Classes'].map((e) => e['Abbrev']).join(', '),
-                                      )
-                                    ]
-                                  )
-                                ),
-                                if (event['Students'].isNotEmpty) RichText(
-                                  text: TextSpan(
-                                    children: [
-                                      const TextSpan(
-                                        text: 'Studenti: ',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold
-                                        ),
-                                      ),
-                                      TextSpan(
-                                        text: event['Students'].map((e) => e['Name']).join(', '),
-                                      )
-                                    ]
-                                  )
-                                ),
-                                if (event['Rooms'].isNotEmpty) RichText(
-                                  text: TextSpan(
-                                    children: [
-                                      const TextSpan(
-                                        text: 'Místnosti: ',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold
-                                        ),
-                                      ),
-                                      TextSpan(
-                                        text: event['Rooms'].map((e) => e['Abbrev']).join(', '),
-                                      )
-                                    ]
-                                  )
-                                ),
-                              ],
-                            ),
-                          )),
+                        child: eventWidget(context, event),
                     )];
                   }).expand((e) => e).toList(),
                 ]);
@@ -294,4 +175,127 @@ class _EventsPageState extends State<EventsPage> {
       ),
     );
   }
+}
+
+OutlinedButton eventWidget(BuildContext context, Map<dynamic, dynamic> event) {
+  return OutlinedButton(
+  style: ButtonStyle(
+    textStyle: MaterialStatePropertyAll(TextStyle(
+      foreground: Paint()..color = Colors.white
+    )),
+  ),
+  onPressed: () {
+    showDialog(context: context, builder: (BuildContext context) => eventDialog(event, context));
+  },
+  child: Padding(
+    padding: const EdgeInsets.only(
+      top: 6.0,
+      right: 6.0,
+      bottom: 6.0,
+    ),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.only(right: 8.0),
+          child: Text(
+            event['Title'].toString(),
+            style: const TextStyle(
+              fontSize: 30,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(right: 8.0),
+          child: Text(
+            event['Description'].toString(),
+          ), // style: TextStyle(fontSize: 30, fontWeight: FontWeight.w500, foreground: Paint()..color = Colors.red),),
+        ),
+        ...List.generate(event['Times'].length,
+            (index) {
+          Map time = event['Times'][index];
+          if (time['WholeDay']) {
+            return Padding(
+              padding: const EdgeInsets.only(top: 8.0, bottom: 8.0, right: 8.0),
+              child: DayWidget(DateTime.parse(time['StartTime']).toLocal())
+              // child: Text(time['StartTime'])); 
+            );
+          } else {
+            return Padding(
+              padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+              child: Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  DayWidget(DateTime.parse(time['StartTime']).toLocal()),
+                  Text('     ${DateFormat('HH : mm').format(DateTime.parse(time['StartTime']).toLocal())} - ${DateFormat('HH : MM').format(DateTime.parse(time['EndTime']).toLocal())}'),
+                ],
+              )
+            );
+          }
+        }),
+        if (event['Teachers'].isNotEmpty) RichText(
+          text: TextSpan(
+            children: [
+              const TextSpan(
+                text: 'Učitelé: ',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold
+                ),
+              ),
+              TextSpan(
+                text: event['Teachers'].map((e) => e['Name']).join(', '),
+              )
+            ]
+          )
+        ),
+        if (event['Classes'].isNotEmpty) RichText(
+          text: TextSpan(
+            children: [
+              const TextSpan(
+                text: 'Třídy: ',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold
+                ),
+              ),
+              TextSpan(
+                text: event['Classes'].map((e) => e['Abbrev']).join(', '),
+              )
+            ]
+          )
+        ),
+        if (event['Students'].isNotEmpty) RichText(
+          text: TextSpan(
+            children: [
+              const TextSpan(
+                text: 'Studenti: ',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold
+                ),
+              ),
+              TextSpan(
+                text: event['Students'].map((e) => e['Name']).join(', '),
+              )
+            ]
+          )
+        ),
+        if (event['Rooms'].isNotEmpty) RichText(
+          text: TextSpan(
+            children: [
+              const TextSpan(
+                text: 'Místnosti: ',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold
+                ),
+              ),
+              TextSpan(
+                text: event['Rooms'].map((e) => e['Abbrev']).join(', '),
+              )
+            ]
+          )
+        ),
+      ],
+    ),
+  ));
 }

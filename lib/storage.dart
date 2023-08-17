@@ -375,6 +375,7 @@ bool isEventInvolved (Map event, dynamic date) {
   if (date.runtimeType == DateTime) {
     stringDate = date.toIso8601String().split('T').first;
   }
+  stringDate = stringDate.split('T').first;
   // print('$date -> "$stringDate"');
   if (event.containsKey('time')) {
     return event['time'].toString().contains(stringDate);
@@ -432,7 +433,7 @@ void showTaskDialog (BuildContext context, void Function(void Function()) setSta
                 if (task?['author'] != null) RichText(text: TextSpan(
                   children: [
                     const TextSpan(text: 'Author: ', style: TextStyle(fontWeight: FontWeight.bold)),
-                    TextSpan(text: removeQuotes(task!['expand']['"author"'][0]['"name"']))
+                    TextSpan(text: removeQuotes(task!['expand']['"author"'][0]['"username"']))
                   ]
                 )),
                 if (!editing && task?['time'] != null) RichText(text: TextSpan(

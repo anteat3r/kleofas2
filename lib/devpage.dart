@@ -146,7 +146,7 @@ class InspectStorageWidget extends StatelessWidget {
             controller: outputController,
             maxLines: null,
             decoration: const InputDecoration(
-              labelText: 'Storage Path'
+              labelText: 'Storage Data'
             ),
           ),
         ],
