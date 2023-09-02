@@ -18,6 +18,9 @@ class _DevPageState extends State<DevPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Query"),
+        actions: [
+          IconButton(onPressed: () {logInfo(['TEST']);}, icon: const Icon(Icons.abc_rounded)),
+        ],
       ),
       body: loadScrollSnacksWrapper(context,
         child: Column(

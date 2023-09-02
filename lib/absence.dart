@@ -74,7 +74,7 @@ class _AbsencePageState extends State<AbsencePage> {
                             showDialog(context: context, builder: (BuildContext context) {
                               return AlertDialog(
                                 title: const Text('Absence'),
-                                content: Text(const JsonEncoder.withIndent('    ').convert(absence)),
+                                content: SingleChildScrollView(scrollDirection: Axis.horizontal, child: Text(const JsonEncoder.withIndent('    ').convert(absence))),
                                 // content: Text('Date: ${czDate(absence["Date"])}\nUnsolved: ${absence["Unsolved"]}\nOk: ${absence["Ok"]}\nMissed: ${absence["Missed"]}\nLate: ${absence["Late"]}\nSoon: ${absence["Soon"]}\nSchool: ${absence["School"]}\nDistance Teaching: ${absence["DistanceTeaching"]}'),
                                 actions: [TextButton(onPressed: () {Navigator.of(context).pop();}, child: const Text('Ok'))],
                               );
@@ -117,7 +117,7 @@ class _AbsencePageState extends State<AbsencePage> {
                               return AlertDialog(
                                 title: const Text('Subject'),
                                 // content: Text('Subject Name: ${absenceSubject["SubjectName"]}\nLessons Count: ${absenceSubject["LessonsCount"]}\nBase: ${absenceSubject["Base"]}\nLate: ${absenceSubject["Late"]}\nSoon: ${absenceSubject["Soon"]}\nSchool: ${absenceSubject["School"]}\nDistance Teaching: ${absenceSubject["DistanceTeaching"]}'),
-                                content: Text(const JsonEncoder.withIndent('    ').convert(absenceSubject)),
+                                content: SingleChildScrollView(scrollDirection: Axis.horizontal, child: Text(const JsonEncoder.withIndent('    ').convert(absenceSubject))),
                                 actions: [TextButton(onPressed: () {Navigator.of(context).pop();}, child: const Text('Ok'))],
                               );
                             });

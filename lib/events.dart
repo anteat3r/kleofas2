@@ -8,7 +8,7 @@ import 'dart:convert';
 AlertDialog eventDialog(Map event, BuildContext context) => AlertDialog(
     title: const Text('Event'),
     // content: SingleChildScrollView(child: Text('Title: ${event["Title"]}\nDescription: ${event["Description"]}\nEvent Type:\n\tAbbrev: ${event["EventType"]["Abbrev"]}\n\tName: ${event["EventType"]["Name"]}\nNote: ${event["Note"]}\nDate Changed: ${czDate(event["DateChanged"])}\nTimes:${event["Times"].map((e) => "\n\tTime:\n\t\tWhole Day: ${e['WholeDay']}\n\t\tStart Time: ${czDate(e['StartTime'])}\n\t\tEnd Time: ${czDate(e['EndTime'])}\n\t\tInterval Start Time: ${czDate(e['IntervalStartTime'])}\n\t\tInterval End Time: ${czDate(e['IntervalEndTime'])}").join("\n\t")}\nClasses:${event["Classes"].map((e) => "\n\tClass:\n\t\tAbbrev: ${e['Abbrev']}\n\t\tName: ${e['Name']}").join("\n\t")}\nClass Sets: TO DO\nTeachers:${event["Teachers"].map((e) => "\n\tTeacher:\n\t\tAbbrev: ${e['Abbrev']}\n\t\tName: ${e['Name']}").join("\n\t")}\nTeacher Sets: TO DO\nRooms:${event["Rooms"].map((e) => "\n\tRoom:\n\t\tAbbrev: ${e['Abbrev']}\n\t\tName: ${e['Name']}").join("\n\t")}\nRoom Sets: TO DO\nStudents:${event["Students"].map((e) => "\n\tName: ${e['Name']}").join("\n\t")}')),
-    content: SingleChildScrollView(child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: Text(const JsonEncoder.withIndent(' ').convert(event)))),
+    content: SingleChildScrollView(child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: Text(const JsonEncoder.withIndent(' ').convert(event))))),
     actions: [
       TextButton(
         onPressed: () {
@@ -165,7 +165,8 @@ class _EventsPageState extends State<EventsPage> {
                       Padding(
                         padding: const EdgeInsets.only(left: 8.0, right: 8.0, top: 5.0),
                         child: eventWidget(context, event),
-                    )];
+                      )
+                    ];
                   }).expand((e) => e).toList(),
                 ]);
               }
@@ -229,7 +230,7 @@ OutlinedButton eventWidget(BuildContext context, Map<dynamic, dynamic> event) {
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   DayWidget(DateTime.parse(time['StartTime']).toLocal()),
-                  Text('     ${DateFormat('HH : mm').format(DateTime.parse(time['StartTime']).toLocal())} - ${DateFormat('HH : MM').format(DateTime.parse(time['EndTime']).toLocal())}'),
+                  Text('     ${DateFormat('HH : mm').format(DateTime.parse(time['StartTime']).toLocal())} - ${DateFormat('HH :mm').format(DateTime.parse(time['EndTime']).toLocal())}'),
                 ],
               )
             );

@@ -27,6 +27,7 @@ dependencies:
   flutter_colorpicker: ^1.0.3
   mobile_scanner: ^3.4.1
   image_picker: ^1.0.2
+  infinite_canvas: ^0.0.9
 
 dev_dependencies:
   flutter_test:

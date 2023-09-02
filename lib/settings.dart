@@ -13,7 +13,6 @@ class SettingsPage extends StatefulWidget {
 enum Gender { civilAttackHelicopter }
 enum EventType { my, all, public }
 
-
 class _SettingsPageState extends State<SettingsPage> {
   bool passwordVisible = false;
   bool autoreload = false;

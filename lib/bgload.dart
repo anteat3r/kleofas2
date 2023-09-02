@@ -8,7 +8,12 @@ typedef Notif = ({String title, String body});
 
 Future<void> bgLoad () async {
   final hour = DateTime.now().hour;
-  if (hour < (int.tryParse(user.get("notifstart") ?? "6") ?? 6) || hour > (int.tryParse(user.get("notifend") ?? "22") ?? 22)) return;
+  final notifstart = int.tryParse(user.get("notifstart") ?? "6") ?? 6;
+  final notifend = int.tryParse(user.get("notifend") ?? "22") ?? 22;
+  if ((hour < notifstart) || (hour > notifend)) {
+    await logInfo(['bgload exited early']);
+    return;
+  }
   final oldStorage = storage.toMap();
   logInfo(['notifkace bgload start']);
   await completeReload();
@@ -19,7 +24,7 @@ Future<void> bgLoad () async {
   ];
   List<Notif> afternoonNotifs = [];
   final today = DateFormat('dd. MM. yyyy').format(DateTime.now());
-  if (hour < 18 && (user.get('lastafternoonchunk') ?? '') == today) {
+  if (hour > 18 && (user.get('lastafternoonchunk') ?? '') != today) {
     afternoonNotifs = [
       ...unexcusedAbsences(oldStorage, newStorage),
       ...tasksToDo(oldStorage, newStorage),

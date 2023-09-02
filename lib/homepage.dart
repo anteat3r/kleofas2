@@ -9,6 +9,7 @@ import 'events.dart';
 import 'menu.dart';
 import 'calendar.dart';
 import 'password.dart';
+import 'drawing.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -107,21 +108,21 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ],
               ),
-              // Row(
-              //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              //   children: <IconButton>[
-              //     IconButton(
-              //       onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const PasswordPage()));},
-              //       icon: const Icon(Icons.key_rounded,),
-              //       iconSize: 70,
-              //     ),
-              //     // if (hasPassword('kleofas', 'password')) IconButton(
-              //     //   onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const UserPage()));},
-              //     //   icon: const Icon(Icons.account_circle_rounded,),
-              //     //   iconSize: 70,
-              //     // ),
-              //   ],
-              // ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: <IconButton>[
+                  IconButton(
+                    onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const DrawingPage()));},
+                    icon: const Icon(Icons.draw_rounded,),
+                    iconSize: 70,
+                  ),
+                  // if (hasPassword('kleofas', 'password')) IconButton(
+                  //   onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const UserPage()));},
+                  //   icon: const Icon(Icons.account_circle_rounded,),
+                  //   iconSize: 70,
+                  // ),
+                ],
+              ),
             ],
           ),
         ),

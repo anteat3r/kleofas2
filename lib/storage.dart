@@ -84,6 +84,10 @@ extension ReplaceMap on String {
   String replaceAppendMap (Map<Pattern, String> replacement) => replaceMap(replacement.map((key, value) => MapEntry(key, '$key$value')));
 }
 
+extension EnumerateList on List<Widget> {
+  List<(int, Widget)> enumerate () => List.generate(length, (i) => (i, this[i]));
+}
+
 Future<void> logInfo (List data) async {
   await log.add({
     'level': 'info',
@@ -135,6 +139,17 @@ Future<String?> showQrDialog (BuildContext context, String title) {
       ),
     ),
   );
+}
+
+Future<void> initHive () async {
+  await Hive.initFlutter();
+  await Hive.openBox<String>('user');
+  await Hive.openBox<Map>('storage');
+  await Hive.openBox<int>('refresh');
+  await Hive.openBox<Map>('passwords');
+  await Hive.openBox<Map>('snacks');
+  await Hive.openBox<Map>('ids');
+  await Hive.openBox<Map>('log');
 }
 
 // STORAGE
