@@ -95,8 +95,9 @@ class _CalendarPageSate extends State<CalendarPage> {
                         onPressed: () {
                           Navigator.push(context, MaterialPageRoute(builder: (context) => DayPage(date)));
                         },
-                        onLongPress: () {
-                          showTaskDialog(context, setState, newTime: date);
+                        onLongPress: () async {
+                          await showDialog(context: context, builder: (context) => TaskDialog(newTime: date,));
+                          setState(() {});
                         },
                         style: ButtonStyle(
                           backgroundColor: MaterialStatePropertyAll(

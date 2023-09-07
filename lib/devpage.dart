@@ -87,7 +87,7 @@ class LogViewWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      child: Text(log.values.map((e) => '${DateTime.fromMillisecondsSinceEpoch(e['time'])} ${e['level']}\n  ${e['data'].join('\n  ')}').join('\n')),
+      child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: Text(log.values.map((e) => '${DateTime.fromMillisecondsSinceEpoch(e['time'])} ${e['level']}\n  ${e['data'].join('\n  ')}').join('\n'))),
     );
   }
 }

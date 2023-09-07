@@ -369,11 +369,12 @@ class _DayPageSate extends State<DayPage> {
                 style: const ButtonStyle(
                   padding: MaterialStatePropertyAll(EdgeInsets.all(10))
                 ),
-                onPressed: () {
+                onPressed: () async {
                   if (event.containsKey('time')) {
-                    showTaskDialog(context, setState, task: event);
+                    await showDialog(context: context, builder: (context) => TaskDialog(task: event,));
+                    setState(() {});
                   } else {
-                    showDialog(context: context, builder: (BuildContext context) => AlertDialog(
+                    await showDialog(context: context, builder: (BuildContext context) => AlertDialog(
                       title: Text(event['Title'].toString()),
                       content: eventWidget(context, event),
                       actions: [
@@ -382,9 +383,10 @@ class _DayPageSate extends State<DayPage> {
                     ));
                   }
                 },
-                onLongPress: () {
+                onLongPress: () async {
                   if (event.containsKey('time')) {
-                    showTaskDialog(context, setState, task: event);
+                    await showDialog(context: context, builder: (context) => TaskDialog(task: event,));
+                    setState(() {});
                   } else {
                     showDialog(context: context, builder: (context) => eventDialog(event, context));
                   }
@@ -404,8 +406,9 @@ class _DayPageSate extends State<DayPage> {
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: OutlinedButton(
-              onPressed: () {
-                showTaskDialog(context, setState, newTime: widget.date);
+              onPressed: () async {
+                await showDialog(context: context, builder: (context) => TaskDialog(newTime: widget.date,),);
+                setState(() {});
               },
               child: const Text("Přidat task"),
             ),

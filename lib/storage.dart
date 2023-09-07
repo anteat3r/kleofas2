@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+// import 'package:kleofas2/bgload.dart';
 import 'bakalari.dart';
 import 'package:result_type/result_type.dart';
 import 'package:intl/intl.dart';
@@ -327,6 +328,11 @@ Future<void> loadMarks () async {
 }
 
 Future<void> loadTimeTable ([DateTime? date]) async {
+  final now = DateTime.now();
+  if (now.weekday == DateTime.saturday || now.weekday == DateTime.sunday) {
+    date = now.add(const Duration(days: 2));
+  }
+  // final oldStorage = storage.toMap();
   await loadEndpoint('timetable', 'timetable/actual', date == null ? null : {'date': DateFormat('yyyy-MM-dd').format(date)});
   for (Map element in storage.get('timetable')?['Classes'] ?? []) { setId(element['Id'], element['Abbrev'], element['Name']); }
   for (Map element in storage.get('timetable')?['Groups'] ?? []) { setId(element['Id'], element['Abbrev'], element['Name']); }
@@ -334,6 +340,7 @@ Future<void> loadTimeTable ([DateTime? date]) async {
   for (Map element in storage.get('timetable')?['Teachers'] ?? []) { setId(element['Id'], element['Abbrev'], element['Name']); }
   for (Map element in storage.get('timetable')?['Rooms'] ?? []) { setId(element['Id'], element['Abbrev'], element['Name']); }
   for (Map element in storage.get('timetable')?['Students'] ?? []) { setId(element['Id'], element['Abbrev'], element['Name']); }
+  // print(timeTableChanges(oldStorage, storage.toMap()));
 }
 
 Future<void> loadAbsence () => loadEndpoint('absence', 'absence/student');
@@ -398,253 +405,540 @@ bool isEventInvolved (Map event, dynamic date) {
   return event['Times'].map((time) => time['StartTime'].split('T')[0]).contains(stringDate);
 }
 
+class TaskDialog extends StatefulWidget {
+  final Map? task;
+  final DateTime? newTime;
+  // final void Function(void Function()) setState;
 
-void showTaskDialog (BuildContext context, void Function(void Function()) setState, {Map? task, DateTime? newTime}) {
-  showDialog(context: context, builder: (context) {
-    bool admin = false;
-    bool editing = !(task?.containsKey('author') ?? false);
-    List<PlatformFile> addedFiles = [];
-    List<String> removedFiles = [];
-    return StatefulBuilder(
-      builder: (context, dialogSetState) {
-        String? stream = task?['stream'];
-        String streamName = task?['expand']?['"stream"'][0]['"title"'] ?? '';
-        streamName = removeQuotes(streamName);
-        Map<String, dynamic> adminStreamsMap = {};
-        if (task != null && (user.get('adminstreams')?.split(' ').contains(stream) ?? false)) {
-          admin = true;
-        }
-        if (editing) {
-          adminStreamsMap = jsonDecode(user.get('adminstreamsnames') ?? '{}');
-          stream ??= adminStreamsMap.keys.first;
-        }
-        DateTime time = newTime ?? DateTime.tryParse(task?['time']?.toString() ?? '') ?? DateTime.now();
-        final subjectController = TextEditingController(text: task?['subject'] ?? '');
-        final titleController = TextEditingController(text: task?['title'] ?? '');
-        final descriptionController = TextEditingController(text: task?['description'] ?? '');
-        return AlertDialog(
-          title: task == null ? const Text('New Task') : Text(task['title']),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+  const TaskDialog({super.key, this.task, /*required this.setState,*/ this.newTime});
+
+  @override
+  State<TaskDialog> createState() => _TaskDialogState();
+}
+
+class _TaskDialogState extends State<TaskDialog> {
+  bool admin = false;
+  bool editing = false;
+  List<PlatformFile> addedFiles = [];
+  List<String> removedFiles = [];
+  String? stream;
+  String streamName = '';
+  Map<String, dynamic> adminStreamsMap = {};
+  DateTime time = DateTime(2069);
+  final subjectController = TextEditingController();
+  final titleController = TextEditingController();
+  final descriptionController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    editing = !(widget.task?.containsKey('author') ?? false);
+    stream = widget.task?['stream'];
+    streamName = widget.task?['expand']?['"stream"'][0]['"title"'] ?? '';
+    streamName = removeQuotes(streamName);
+    if (widget.task != null && (user.get('adminstreams')?.split(' ').contains(stream) ?? false)) {
+      admin = true;
+    }
+    if (editing) {
+      adminStreamsMap = jsonDecode(user.get('adminstreamsnames') ?? '{}');
+      stream ??= adminStreamsMap.keys.first;
+    }
+    time = widget.newTime ?? DateTime.tryParse(widget.task?['time']?.toString() ?? '') ?? DateTime.now();
+    subjectController.text = widget.task?['subject'] ?? '';
+    titleController.text = widget.task?['title'] ?? '';
+    descriptionController.text = widget.task?['description'] ?? '';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: widget.task == null ? const Text('New Task') : Text(widget.task!['title']),
+      content: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (!editing) RichText(text: TextSpan(
               children: [
-                if (!editing) RichText(text: TextSpan(
-                  children: [
-                    const TextSpan(text: 'Stream: ', style: TextStyle(fontWeight: FontWeight.bold)),
-                    TextSpan(text: streamName)
-                  ]
-                )),
-                if (editing) DropdownButton<String>(
-                  value: stream,
-                  onChanged: (value) {
-                    if (value == null) return;
+                const TextSpan(text: 'Stream: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                TextSpan(text: streamName)
+              ]
+            )),
+            if (editing) Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: DropdownButton<String>(
+                value: stream,
+                onChanged: (value) {
+                  if (value == null) return;
+                  setState(() {
                     stream = value;
-                  },
-                  items: adminStreamsMap.keys.map((e) => DropdownMenuItem(
-                    value: e,
-                    child: Text(adminStreamsMap[e] ?? '?'),
-                  )).toList(),
-                ),
-                if (task?['author'] != null) RichText(text: TextSpan(
-                  children: [
-                    const TextSpan(text: 'Author: ', style: TextStyle(fontWeight: FontWeight.bold)),
-                    TextSpan(text: removeQuotes(task!['expand']['"author"'][0]['"username"']))
-                  ]
-                )),
-                if (!editing && task?['time'] != null) RichText(text: TextSpan(
-                  children: [
-                    const TextSpan(text: 'Time: ', style: TextStyle(fontWeight: FontWeight.bold)),
-                    TextSpan(text: DateFormat('d. M. y').format(time))
-                  ]
-                )),
-                if (editing) OutlinedButton(
+                  });
+                },
+                items: adminStreamsMap.keys.map((e) => DropdownMenuItem(
+                  value: e,
+                  child: Text(adminStreamsMap[e] ?? '?'),
+                )).toList(),
+              ),
+            ),
+            if (widget.task?['author'] != null) RichText(text: TextSpan(
+              children: [
+                const TextSpan(text: 'Author: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                TextSpan(text: removeQuotes(widget.task!['expand']['"author"'][0]['"username"']))
+              ]
+            )),
+            if (!editing && widget.task?['time'] != null) RichText(text: TextSpan(
+              children: [
+                const TextSpan(text: 'Time: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                TextSpan(text: DateFormat('d. M. y').format(time))
+              ]
+            )),
+            if (editing) OutlinedButton(
+              onPressed: () async {
+                final newTime = await showDatePicker(
+                  context: context,
+                  initialDate: time,
+                  firstDate: DateTime(1969),
+                  lastDate: DateTime(2069)
+                );
+                if (newTime == null) return;
+                setState(() {
+                  time = newTime;
+                },);
+              },
+              child: Text(DateFormat('d. M. y').format(time)),
+            ),
+            if (!editing && widget.task?['subject'] != null) RichText(text: TextSpan(
+              children: [
+                const TextSpan(text: 'Subject: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                TextSpan(text: widget.task!['subject'])
+              ]
+            )),
+            if (editing) TextField(
+              controller: subjectController,
+              decoration: const InputDecoration(labelText: 'Subject'),
+            ),
+            if (!editing && widget.task?['title'] != null) RichText(text: TextSpan(
+              children: [
+                const TextSpan(text: 'Title: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                TextSpan(text: widget.task!['title'])
+              ]
+            )),
+            if (editing) TextField(
+              controller: titleController,
+              decoration: const InputDecoration(labelText: 'Title'),
+            ),
+            if (editing) const SizedBox(width: 10, height: 10,),
+            RichText(text: const TextSpan(text: 'Files: ', style: TextStyle(fontWeight: FontWeight.bold)),),
+            ...widget.task?['files'].map((dynamic file) => Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  RichText(text: TextSpan(
+                    style: const TextStyle(color: Colors.lightBlue),
+                    text: file,
+                    recognizer: TapAndPanGestureRecognizer()..onTapDown = (details) {
+                      launchUrl(Uri.parse('${pb.baseUrl}/api/files/tasks/${widget.task?['id']}/$file'), mode: LaunchMode.externalApplication);
+                    }
+                  )),
+                  if (editing) IconButton(
+                    onPressed: () {
+                      removedFiles.add(file);
+                      setState(() {
+                        widget.task?['files'].remove(file);
+                      },);
+                    },
+                    icon: const Icon(Icons.remove_circle_rounded)
+                  ),
+                ],
+              ),
+            )).toList() ?? [],
+            if (editing) Row(
+              children: [
+                RichText(text: const TextSpan(text: 'Added Files: ', style: TextStyle(fontWeight: FontWeight.bold), ),),
+                IconButton(
                   onPressed: () async {
-                    final newTime = await showDatePicker(
-                      context: context,
-                      initialDate: time,
-                      firstDate: DateTime(1969),
-                      lastDate: DateTime(2069)
-                    );
-                    if (newTime == null) return;
-                    dialogSetState(() {
-                      time = newTime;
+                    final files = await FilePicker.platform.pickFiles();
+                    if (files == null) return;
+                    setState(() {
+                      addedFiles.addAll(files.files);
                     },);
                   },
-                  child: Text(DateFormat('d. M. y').format(time)),
-                ),
-                if (!editing && task?['subject'] != null) RichText(text: TextSpan(
-                  children: [
-                    const TextSpan(text: 'Subject: ', style: TextStyle(fontWeight: FontWeight.bold)),
-                    TextSpan(text: task!['subject'])
-                  ]
-                )),
-                if (editing) TextField(
-                  controller: subjectController,
-                  decoration: const InputDecoration(labelText: 'Subject'),
-                ),
-                if (!editing && task?['title'] != null) RichText(text: TextSpan(
-                  children: [
-                    const TextSpan(text: 'Title: ', style: TextStyle(fontWeight: FontWeight.bold)),
-                    TextSpan(text: task!['title'])
-                  ]
-                )),
-                if (editing) TextField(
-                  controller: titleController,
-                  decoration: const InputDecoration(labelText: 'Title'),
-                ),
-                RichText(text: const TextSpan(text: 'Files: ', style: TextStyle(fontWeight: FontWeight.bold)),),
-                ...task?['files'].map((dynamic file) => Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    children: [
-                      RichText(text: TextSpan(
-                        style: const TextStyle(color: Colors.lightBlue),
-                        text: file,
-                        recognizer: TapAndPanGestureRecognizer()..onTapDown = (details) {
-                          launchUrl(Uri.parse('${pb.baseUrl}/api/files/tasks/${task['id']}/$file'), mode: LaunchMode.externalApplication);
-                        }
-                      )),
-                      if (editing) IconButton(
-                        onPressed: () {
-                          removedFiles.add(file);
-                          dialogSetState(() {
-                            task['files'].remove(file);
-                          },);
-                        },
-                        icon: const Icon(Icons.remove_circle_rounded)
-                      ),
-                    ],
-                  ),
-                )).toList() ?? [],
-                if (editing) Row(
-                  children: [
-                    RichText(text: const TextSpan(text: 'Added Files: ', style: TextStyle(fontWeight: FontWeight.bold), ),),
-                    IconButton(
-                      onPressed: () async {
-                        final files = await FilePicker.platform.pickFiles();
-                        if (files == null) return;
-                        dialogSetState(() {
-                          addedFiles.addAll(files.files);
-                        },);
-                      },
-                      icon: const Icon(Icons.add)
-                    ),
-                  ],
-                ),
-                if (editing) ...addedFiles.map((PlatformFile file) => Row(
-                  children: [
-                    Flexible(
-                      child: RichText(text: TextSpan(
-                        style: const TextStyle(color: Colors.green),
-                        text: file.name,
-                      )),
-                    ),
-                    Flexible(
-                      child: IconButton(
-                        onPressed: () {
-                          dialogSetState(() {
-                            addedFiles.remove(file);
-                          },);
-                        },
-                        icon: const Icon(Icons.remove_circle_rounded)
-                      ),
-                    ),
-                  ],
-                )).toList(),
-                if (!editing) Row(
-                  children: [
-                    Flexible(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [RichText(text: TextSpan(
-                          children: [
-                            const TextSpan(text: 'Description: ', style: TextStyle(fontWeight: FontWeight.bold)),
-                            TextSpan(text: task!['description'])
-                          ]
-                        )),]
-                      ),
-                    ),
-                  ],
-                ),
-                if (editing) TextField(
-                  controller: descriptionController,
-                  maxLines: null,
-                  decoration: const InputDecoration(labelText: 'Description'),
+                  icon: const Icon(Icons.add)
                 ),
               ],
             ),
-          ),
-          actions: [
-            if (admin && !editing) OutlinedButton(
-              onPressed: () {
-                dialogSetState(() {
-                  editing = true;
-                });
-              },
-              child: const Text('Edit'),
+            if (editing) ...addedFiles.map((PlatformFile file) => Row(
+              children: [
+                Flexible(
+                  child: RichText(text: TextSpan(
+                    style: const TextStyle(color: Colors.green),
+                    text: file.name,
+                  )),
+                ),
+                Flexible(
+                  child: IconButton(
+                    onPressed: () {
+                      setState(() {
+                        addedFiles.remove(file);
+                      },);
+                    },
+                    icon: const Icon(Icons.remove_circle_rounded)
+                  ),
+                ),
+              ],
+            )).toList(),
+            if (!editing) Row(
+              children: [
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [RichText(text: TextSpan(
+                      children: [
+                        const TextSpan(text: 'Description: \n', style: TextStyle(fontWeight: FontWeight.bold)),
+                        TextSpan(text: widget.task!['description'])
+                      ]
+                    )),]
+                  ),
+                ),
+              ],
             ),
-            if (editing && task?['author'] == null) OutlinedButton(
-              onPressed: () {
-                loadingSnack(() async {
-                  final navigatorState = Navigator.of(context);
-                  await loginPb();
-                  await pb.collection('tasks').create(body: {
-                    'stream': stream,
-                    'author': pb.authStore.model.id,
-                    'time': time.toIso8601String(),
-                    'subject': subjectController.text,
-                    'title': titleController.text,
-                    'description': descriptionController.text,
-                  }, files: await Future.wait(addedFiles.map((e) async => http.MultipartFile.fromBytes(
-                    'files', await File(e.path ?? '').readAsBytes(), filename: e.name
-                  )).toList()));
-                  await loadTasks();
-                  navigatorState.pop();
-                  setState(() {},);
-                }, 'creating');
-              },
-              child: const Text('Create'),
-            ),
-            if (editing && task?['author'] != null) OutlinedButton(
-              onPressed: () {
-                loadingSnack(() async {
-                  final navigatorState = Navigator.of(context);
-                  await loginPb();
-                  await pb.collection('tasks').update(task!['id'], body: {
-                    'stream': stream,
-                    'author': pb.authStore.model.id,
-                    'time': time.toIso8601String(),
-                    'subject': subjectController.text,
-                    'title': titleController.text,
-                    'description': descriptionController.text,
-                  }, files: await Future.wait(addedFiles.map((e) async => http.MultipartFile.fromBytes(
-                    'files', await File(e.path ?? '').readAsBytes(), filename: e.name
-                  )).toList()));
-                  if (removedFiles.isNotEmpty) {
-                    await pb.collection('tasks').update(task['id'], body: {
-                      'files-': removedFiles,
-                    });
-                  }
-                  await loadTasks();
-                  navigatorState.pop();
-                  setState(() {},);
-                }, 'submitting');
-              },
-              child: const Text('Submit'),
-            ),
-            OutlinedButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Close'),
+            if (editing) TextField(
+              controller: descriptionController,
+              maxLines: null,
+              decoration: const InputDecoration(labelText: 'Description'),
             ),
           ],
-        );
-      },
+        ),
+      ),
+      actions: [
+        if (admin && !editing) OutlinedButton(
+          onPressed: () {
+            setState(() {
+              editing = true;
+            });
+          },
+          child: const Text('Edit'),
+        ),
+        if (editing && widget.task?['author'] == null) OutlinedButton(
+          onPressed: () {
+            loadingSnack(() async {
+              final navigatorState = Navigator.of(context);
+              await loginPb();
+              await pb.collection('tasks').create(body: {
+                'stream': stream,
+                'author': pb.authStore.model.id,
+                'time': time.toIso8601String(),
+                'subject': subjectController.text,
+                'title': titleController.text,
+                'description': descriptionController.text,
+              }, files: await Future.wait(addedFiles.map((e) async => http.MultipartFile.fromBytes(
+                'files', await File(e.path ?? '').readAsBytes(), filename: e.name
+              )).toList()));
+              await loadTasks();
+              navigatorState.pop();
+              // setState(() {},);
+            }, 'creating');
+          },
+          child: const Text('Create'),
+        ),
+        if (editing && widget.task?['author'] != null) OutlinedButton(
+          onPressed: () {
+            loadingSnack(() async {
+              final navigatorState = Navigator.of(context);
+              await loginPb();
+              await pb.collection('tasks').update(widget.task!['id'], body: {
+                'stream': stream,
+                'author': pb.authStore.model.id,
+                'time': time.toIso8601String(),
+                'subject': subjectController.text,
+                'title': titleController.text,
+                'description': descriptionController.text,
+              }, files: await Future.wait(addedFiles.map((e) async => http.MultipartFile.fromBytes(
+                'files', await File(e.path ?? '').readAsBytes(), filename: e.name
+              )).toList()));
+              if (removedFiles.isNotEmpty) {
+                await pb.collection('tasks').update(widget.task?['id'], body: {
+                  'files-': removedFiles,
+                });
+              }
+              await loadTasks();
+              navigatorState.pop();
+              // setState(() {},);
+            }, 'submitting');
+          },
+          child: const Text('Submit'),
+        ),
+        OutlinedButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          child: const Text('Close'),
+        ),
+      ],
     );
-  },);
+  }
 }
+
+// void showTaskDialog (BuildContext context, void Function(void Function()) setState, {Map? task, DateTime? newTime}) {
+//   if (task == null && (user.get('adminstreams')?.split(' ').isEmpty ?? true)) {
+//     showDialog(context: context, builder: (context) => AlertDialog(
+//       title: const Text('žádný admin stream'),
+//       content: const Text('nemáš žádný stream uložený jako admin'),
+//       actions: [
+//         OutlinedButton(onPressed: () {Navigator.pop(context);}, child: const Text('Zavřít')),
+//       ],
+//     ));
+//     return;
+//   }
+//   showDialog(context: context, builder: (context) {
+//     bool admin = false;
+//     bool editing = !(task?.containsKey('author') ?? false);
+//     List<PlatformFile> addedFiles = [];
+//     List<String> removedFiles = [];
+//     return StatefulBuilder(
+//       builder: (context, dialogSetState) {
+//         String? stream = task?['stream'];
+//         String streamName = task?['expand']?['"stream"'][0]['"title"'] ?? '';
+//         streamName = removeQuotes(streamName);
+//         Map<String, dynamic> adminStreamsMap = {};
+//         if (task != null && (user.get('adminstreams')?.split(' ').contains(stream) ?? false)) {
+//           admin = true;
+//         }
+//         if (editing) {
+//           adminStreamsMap = jsonDecode(user.get('adminstreamsnames') ?? '{}');
+//           stream ??= adminStreamsMap.keys.first;
+//         }
+//         DateTime time = newTime ?? DateTime.tryParse(task?['time']?.toString() ?? '') ?? DateTime.now();
+//         final subjectController = TextEditingController(text: task?['subject'] ?? '');
+//         final titleController = TextEditingController(text: task?['title'] ?? '');
+//         final descriptionController = TextEditingController(text: task?['description'] ?? '');
+//         return AlertDialog(
+//           title: task == null ? const Text('New Task') : Text(task['title']),
+//           content: SingleChildScrollView(
+//             child: Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               children: [
+//                 if (!editing) RichText(text: TextSpan(
+//                   children: [
+//                     const TextSpan(text: 'Stream: ', style: TextStyle(fontWeight: FontWeight.bold)),
+//                     TextSpan(text: streamName)
+//                   ]
+//                 )),
+//                 if (editing) DropdownButton<String>(
+//                   value: stream,
+//                   onChanged: (value) {
+//                     print(stream);
+//                     print(adminStreamsMap);
+//                     if (value == null) return;
+//                     dialogSetState(() {
+//                       stream = value;
+//                     });
+//                   },
+//                   items: adminStreamsMap.keys.map((e) => DropdownMenuItem(
+//                     value: e,
+//                     child: Text(adminStreamsMap[e] ?? '?'),
+//                   )).toList(),
+//                 ),
+//                 if (task?['author'] != null) RichText(text: TextSpan(
+//                   children: [
+//                     const TextSpan(text: 'Author: ', style: TextStyle(fontWeight: FontWeight.bold)),
+//                     TextSpan(text: removeQuotes(task!['expand']['"author"'][0]['"username"']))
+//                   ]
+//                 )),
+//                 if (!editing && task?['time'] != null) RichText(text: TextSpan(
+//                   children: [
+//                     const TextSpan(text: 'Time: ', style: TextStyle(fontWeight: FontWeight.bold)),
+//                     TextSpan(text: DateFormat('d. M. y').format(time))
+//                   ]
+//                 )),
+//                 if (editing) OutlinedButton(
+//                   onPressed: () async {
+//                     final newTime = await showDatePicker(
+//                       context: context,
+//                       initialDate: time,
+//                       firstDate: DateTime(1969),
+//                       lastDate: DateTime(2069)
+//                     );
+//                     if (newTime == null) return;
+//                     dialogSetState(() {
+//                       time = newTime;
+//                     },);
+//                   },
+//                   child: Text(DateFormat('d. M. y').format(time)),
+//                 ),
+//                 if (!editing && task?['subject'] != null) RichText(text: TextSpan(
+//                   children: [
+//                     const TextSpan(text: 'Subject: ', style: TextStyle(fontWeight: FontWeight.bold)),
+//                     TextSpan(text: task!['subject'])
+//                   ]
+//                 )),
+//                 if (editing) TextField(
+//                   controller: subjectController,
+//                   decoration: const InputDecoration(labelText: 'Subject'),
+//                 ),
+//                 if (!editing && task?['title'] != null) RichText(text: TextSpan(
+//                   children: [
+//                     const TextSpan(text: 'Title: ', style: TextStyle(fontWeight: FontWeight.bold)),
+//                     TextSpan(text: task!['title'])
+//                   ]
+//                 )),
+//                 if (editing) TextField(
+//                   controller: titleController,
+//                   decoration: const InputDecoration(labelText: 'Title'),
+//                 ),
+//                 RichText(text: const TextSpan(text: 'Files: ', style: TextStyle(fontWeight: FontWeight.bold)),),
+//                 ...task?['files'].map((dynamic file) => Padding(
+//                   padding: const EdgeInsets.all(8.0),
+//                   child: Row(
+//                     children: [
+//                       RichText(text: TextSpan(
+//                         style: const TextStyle(color: Colors.lightBlue),
+//                         text: file,
+//                         recognizer: TapAndPanGestureRecognizer()..onTapDown = (details) {
+//                           launchUrl(Uri.parse('${pb.baseUrl}/api/files/tasks/${task['id']}/$file'), mode: LaunchMode.externalApplication);
+//                         }
+//                       )),
+//                       if (editing) IconButton(
+//                         onPressed: () {
+//                           removedFiles.add(file);
+//                           dialogSetState(() {
+//                             task['files'].remove(file);
+//                           },);
+//                         },
+//                         icon: const Icon(Icons.remove_circle_rounded)
+//                       ),
+//                     ],
+//                   ),
+//                 )).toList() ?? [],
+//                 if (editing) Row(
+//                   children: [
+//                     RichText(text: const TextSpan(text: 'Added Files: ', style: TextStyle(fontWeight: FontWeight.bold), ),),
+//                     IconButton(
+//                       onPressed: () async {
+//                         final files = await FilePicker.platform.pickFiles();
+//                         if (files == null) return;
+//                         dialogSetState(() {
+//                           addedFiles.addAll(files.files);
+//                         },);
+//                       },
+//                       icon: const Icon(Icons.add)
+//                     ),
+//                   ],
+//                 ),
+//                 if (editing) ...addedFiles.map((PlatformFile file) => Row(
+//                   children: [
+//                     Flexible(
+//                       child: RichText(text: TextSpan(
+//                         style: const TextStyle(color: Colors.green),
+//                         text: file.name,
+//                       )),
+//                     ),
+//                     Flexible(
+//                       child: IconButton(
+//                         onPressed: () {
+//                           dialogSetState(() {
+//                             addedFiles.remove(file);
+//                           },);
+//                         },
+//                         icon: const Icon(Icons.remove_circle_rounded)
+//                       ),
+//                     ),
+//                   ],
+//                 )).toList(),
+//                 if (!editing) Row(
+//                   children: [
+//                     Flexible(
+//                       child: Column(
+//                         crossAxisAlignment: CrossAxisAlignment.start,
+//                         mainAxisSize: MainAxisSize.min,
+//                         children: [RichText(text: TextSpan(
+//                           children: [
+//                             const TextSpan(text: 'Description: ', style: TextStyle(fontWeight: FontWeight.bold)),
+//                             TextSpan(text: task!['description'])
+//                           ]
+//                         )),]
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//                 if (editing) TextField(
+//                   controller: descriptionController,
+//                   maxLines: null,
+//                   decoration: const InputDecoration(labelText: 'Description'),
+//                 ),
+//               ],
+//             ),
+//           ),
+//           actions: [
+//             if (admin && !editing) OutlinedButton(
+//               onPressed: () {
+//                 dialogSetState(() {
+//                   editing = true;
+//                 });
+//               },
+//               child: const Text('Edit'),
+//             ),
+//             if (editing && task?['author'] == null) OutlinedButton(
+//               onPressed: () {
+//                 loadingSnack(() async {
+//                   final navigatorState = Navigator.of(context);
+//                   await loginPb();
+//                   await pb.collection('tasks').create(body: {
+//                     'stream': stream,
+//                     'author': pb.authStore.model.id,
+//                     'time': time.toIso8601String(),
+//                     'subject': subjectController.text,
+//                     'title': titleController.text,
+//                     'description': descriptionController.text,
+//                   }, files: await Future.wait(addedFiles.map((e) async => http.MultipartFile.fromBytes(
+//                     'files', await File(e.path ?? '').readAsBytes(), filename: e.name
+//                   )).toList()));
+//                   await loadTasks();
+//                   navigatorState.pop();
+//                   setState(() {},);
+//                 }, 'creating');
+//               },
+//               child: const Text('Create'),
+//             ),
+//             if (editing && task?['author'] != null) OutlinedButton(
+//               onPressed: () {
+//                 loadingSnack(() async {
+//                   final navigatorState = Navigator.of(context);
+//                   await loginPb();
+//                   await pb.collection('tasks').update(task!['id'], body: {
+//                     'stream': stream,
+//                     'author': pb.authStore.model.id,
+//                     'time': time.toIso8601String(),
+//                     'subject': subjectController.text,
+//                     'title': titleController.text,
+//                     'description': descriptionController.text,
+//                   }, files: await Future.wait(addedFiles.map((e) async => http.MultipartFile.fromBytes(
+//                     'files', await File(e.path ?? '').readAsBytes(), filename: e.name
+//                   )).toList()));
+//                   if (removedFiles.isNotEmpty) {
+//                     await pb.collection('tasks').update(task['id'], body: {
+//                       'files-': removedFiles,
+//                     });
+//                   }
+//                   await loadTasks();
+//                   navigatorState.pop();
+//                   setState(() {},);
+//                 }, 'submitting');
+//               },
+//               child: const Text('Submit'),
+//             ),
+//             OutlinedButton(
+//               onPressed: () {
+//                 Navigator.pop(context);
+//               },
+//               child: const Text('Close'),
+//             ),
+//           ],
+//         );
+//       },
+//     );
+//   },);
+// }
 // Future<void> addTask (String subject, String date, String title, String description, BuildContext context) async {
 //   date = date.replaceAll(' ', '');
 //   if (date == 'zítra') {

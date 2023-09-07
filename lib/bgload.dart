@@ -10,7 +10,7 @@ Future<void> bgLoad () async {
   final hour = DateTime.now().hour;
   final notifstart = int.tryParse(user.get("notifstart") ?? "6") ?? 6;
   final notifend = int.tryParse(user.get("notifend") ?? "22") ?? 22;
-  if ((hour < notifstart) || (hour > notifend)) {
+  if ((hour < notifstart) || (hour >= notifend)) {
     await logInfo(['bgload exited early']);
     return;
   }
@@ -59,23 +59,21 @@ List<Notif> newMarks (Storage oldStorage, Storage newStorage) {
   final oldMarksSet = allOldMarks.toSet();
   final newMarksSet = allNewMarks.toSet();
   final changedMarks = newMarksSet.difference(oldMarksSet);
-  return changedMarks.map((mark) => (
+  return changedMarks.map((dynamic mark) => (
     title: 'Nová známka z ${subjects[mark['SubjectId']]?['Abbrev'] ?? '?'}',
     body: '${mark['Caption']}: ${mark['MarkText']} (${mark['Weight'] == null ? mark['TypeNote'] : 'váha ${mark['Weight']}'})\nNový průměr z ${subjects[mark['SubjectId']]?['Abbrev'] ?? '?'}: ${subjects[mark['SubjectId']]?['AverageText'] ?? '?'}',
   )).toList();
 }
 
 List<Notif> timeTableChanges (Storage oldStorage, Storage newStorage) {
-  final List<Map> oldDaysRaw = oldStorage["timetable"]?["Days"] ?? [];
-  final List<Map> oldDays = oldDaysRaw.map((e) => e.map((key, value) {
-    final List<Map> atoms = value['Atoms'] ?? [];
-    return MapEntry(key, value..['Atoms'] = atoms.map((e) => e..['Theme'] = '').toList());
-  })).toList();
-  final List<Map> newDaysRaw = newStorage["timetable"]?["Days"] ?? [];
-  final List<Map> newDays = newDaysRaw.map((e) => e.map((key, value) {
-    final List<Map> atoms = value['Atoms'] ?? [];
-    return MapEntry(key, value..['Atoms'] = atoms.map((e) => e..['Theme'] = '').toList());
-  })).toList();
+  final List oldDaysRaw = [...oldStorage["timetable"]?["Days"] ?? []];
+  final List oldDays = oldDaysRaw.map((e) => e..['Atoms'] = e['Atoms'].map((f) => f..['Theme'] = '').toList()).toList();
+  final List newDaysRaw = [...newStorage["timetable"]?["Days"] ?? []];
+  final List newDays = newDaysRaw.map((e) => e..['Atoms'] = e['Atoms'].map((f) => f..['Theme'] = '').toList()).toList();
+  // final List newDays = newDaysRaw.map((e) => e.map((key, value) {
+  //   final List atoms = value['Atoms'] ?? [];
+  //   return MapEntry(key, value..['Atoms'] = atoms.map((e) => e..['Theme'] = '').toList());
+  // })).toList();
   if (oldDays.length != newDays.length) return [];
   List<Notif> notifsToShow_ = [];
   for (int i = 0; i < max(oldDays.length, newDays.length); i++) {
