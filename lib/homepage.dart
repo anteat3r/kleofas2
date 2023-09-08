@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kleofas2/bgload.dart';
 import 'absence.dart';
 import 'storage.dart';
 import 'devpage.dart';
@@ -10,6 +11,8 @@ import 'menu.dart';
 import 'calendar.dart';
 import 'password.dart';
 import 'drawing.dart';
+import 'dart:io';
+import 'dart:convert';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -34,10 +37,20 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Main menu'),
-        actions: const [
-          IconButton(
+        actions: [
+          const IconButton(
             onPressed: completeReloadSnack,
             icon: Icon(Icons.refresh_rounded)
+          ),
+          IconButton(
+            onPressed: () {
+              final path = Directory.current.path;
+              print(newMarks(
+                (jsonDecode(File('$path/lib/oldStorage.json').readAsStringSync()) as Map).map((k, v) => MapEntry(k, Map.from(v))),
+                (jsonDecode(File('$path/lib/newStorage.json').readAsStringSync()) as Map).map((k, v) => MapEntry(k, Map.from(v))),
+              ));
+            },
+            icon: const Icon(Icons.developer_board_rounded)
           ),
         ],
       ),

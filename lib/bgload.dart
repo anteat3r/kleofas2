@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'storage.dart';
 import 'dart:math';
 import 'package:intl/intl.dart';
@@ -36,13 +38,14 @@ Future<void> bgLoad () async {
     await localNotifs.initialize(const InitializationSettings(
       android: AndroidInitializationSettings("icon")
     ));
+    final rng = Random();
     for (final notif in allDayNotifs) {
-      await localNotifs.show(0, notif.title, notif.body, const NotificationDetails(
+      await localNotifs.show(rng.nextInt(1000), notif.title, notif.body, const NotificationDetails(
         android: AndroidNotificationDetails("kleofasAllDay", "Kleofáš celodenní notifikace (nové známky, změny rozvrhu)")
       ));
     }
     for (final notif in allDayNotifs) {
-      await localNotifs.show(0, notif.title, notif.body, const NotificationDetails(
+      await localNotifs.show(rng.nextInt(1000), notif.title, notif.body, const NotificationDetails(
         android: AndroidNotificationDetails("kleofasAfternoon", "Kleofáš odpolední notifikace (úkoly na zítra, neomluvené absence)")
       ));
     }
@@ -53,35 +56,38 @@ Future<void> bgLoad () async {
 List<Notif> newMarks (Storage oldStorage, Storage newStorage) {
   final newMarksRaw = newStorage['marks']?['Subjects'] ?? [];
   final oldMarksRaw = oldStorage['marks']?['Subjects'] ?? [];
-  final subjects = mapListToMap(newMarksRaw.map((e) => e['Subject']).toList());
+  final subjects = mapListToMapFunc(newMarksRaw, (e) => e['Subject']['Id']);
   final List<Map> allOldMarks = [for (Map subject in oldMarksRaw) ...subject['Marks']];
   final List<Map> allNewMarks = [for (Map subject in newMarksRaw) ...subject['Marks']];
-  final oldMarksSet = allOldMarks.toSet();
-  final newMarksSet = allNewMarks.toSet();
-  final changedMarks = newMarksSet.difference(oldMarksSet);
-  return changedMarks.map((dynamic mark) => (
-    title: 'Nová známka z ${subjects[mark['SubjectId']]?['Abbrev'] ?? '?'}',
-    body: '${mark['Caption']}: ${mark['MarkText']} (${mark['Weight'] == null ? mark['TypeNote'] : 'váha ${mark['Weight']}'})\nNový průměr z ${subjects[mark['SubjectId']]?['Abbrev'] ?? '?'}: ${subjects[mark['SubjectId']]?['AverageText'] ?? '?'}',
-  )).toList();
+  final allOldMarksMap = mapListToMap(allOldMarks);
+  final allNewMarksMap = mapListToMap(allNewMarks);
+  final oldMarksIdsSet = allOldMarksMap.keys.toSet();
+  final newMarksIdsSet = allNewMarksMap.keys.toSet();
+  final changedMarks = newMarksIdsSet.difference(oldMarksIdsSet);
+  return changedMarks.map((dynamic markId) {
+    final mark = allNewMarksMap[markId];
+    return (
+      title: 'Nová známka - ${subjects[mark['SubjectId']]?['Subject']?['Name']?.trim() ?? '?'}',
+      body: '${mark['Caption']}: ${mark['MarkText']} (${mark['Weight'] == null ? mark['TypeNote'] : 'váha ${mark['Weight']}'})\n${subjects[mark['SubjectId']]?['Subject']?['Name']?.trim() ?? '?'} - nový průměr: ${subjects[mark['SubjectId']]?['AverageText'] ?? '?'}\nPopis: ${mark['Theme'] ?? ''}',
+    );
+  }).toList();
 }
 
 List<Notif> timeTableChanges (Storage oldStorage, Storage newStorage) {
-  final List oldDaysRaw = [...oldStorage["timetable"]?["Days"] ?? []];
-  final List oldDays = oldDaysRaw.map((e) => e..['Atoms'] = e['Atoms'].map((f) => f..['Theme'] = '').toList()).toList();
-  final List newDaysRaw = [...newStorage["timetable"]?["Days"] ?? []];
-  final List newDays = newDaysRaw.map((e) => e..['Atoms'] = e['Atoms'].map((f) => f..['Theme'] = '').toList()).toList();
-  // final List newDays = newDaysRaw.map((e) => e.map((key, value) {
-  //   final List atoms = value['Atoms'] ?? [];
-  //   return MapEntry(key, value..['Atoms'] = atoms.map((e) => e..['Theme'] = '').toList());
-  // })).toList();
-  if (oldDays.length != newDays.length) return [];
+  final List oldDays = oldStorage['timetable']?['Days'] ?? [];
+  final List newDays = newStorage['timetable']?['Days'] ?? [];
+  final maxLength = max(oldDays.length, newDays.length);
+  final Map oldDaysMap = oldDays.asMap();
+  final Map newDaysMap = newDays.asMap();
   List<Notif> notifsToShow_ = [];
-  for (int i = 0; i < max(oldDays.length, newDays.length); i++) {
-    final oldDay = oldDays[i];
-    final newDay = newDays[i];
-    if (oldDay != newDay) {
+  for (int i = 0; i < maxLength; i++) {
+    final oldDay = oldDaysMap[i];
+    final newDay = newDaysMap[i];
+    final oldDayString = jsonEncode(oldDay).replaceAll('"Theme": null,', '').replaceAll(RegExp('"Theme": ".+?",'), '');
+    final newDayString = jsonEncode(newDay).replaceAll('"Theme": null,', '').replaceAll(RegExp('"Theme": ".+?",'), '');
+    if (oldDayString != newDayString) {
       notifsToShow_.add((
-        title: 'změna rozvrhu ${newDay['DayOfWeek']}',
+        title: 'změna rozvrhu ${czWeekDayNames[newDay['DayOfWeek']]}',
         body: '',
       ));
     }

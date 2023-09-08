@@ -114,6 +114,7 @@ String czDate (String? isoTime) {
 }
 
 Map mapListToMap (Iterable list, {String id = 'Id'}) => {for (Map item in list) item[id]: item};
+Map mapListToMapFunc (Iterable list, dynamic Function(Map) fn) => {for (Map item in list) fn(item): item};
 
 String removeQuotes (String old) {
   if (old.startsWith('"')) {
