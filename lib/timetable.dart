@@ -6,6 +6,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'storage.dart';
 import 'package:intl/intl.dart';
 import 'dart:io';
+import 'custom_icons.dart';
 
 DateTime roundDateTime (DateTime date) {
   if (date.hour > 12) {
@@ -118,7 +119,7 @@ class _TimetablePageState extends State<TimetablePage> {
                 child: Transform.translate(offset: const Offset(-3, 0), child:
                   event != {}
                   ? ( event.containsKey('time')
-                    ? Icon(Icons.tornado_rounded, size: Platform.isWindows ? 20 : 24,)
+                    ? Icon(allIconsMap[user.get('streamicon:${event['stream']}')] ?? Icons.tornado_rounded, size: Platform.isWindows ? 20 : 24,)
                     : Icon(Icons.event, size: Platform.isWindows ? 20 : 24,) )
                   : const Text('...')
                 ),

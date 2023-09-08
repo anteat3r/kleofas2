@@ -30,7 +30,9 @@ class _SettingsPageState extends State<SettingsPage> {
     await loginPb();
     for (var key in streams.keys) {
       try {
-        streams[key] = (await pb.collection('streams').getOne(key)).data['title'];
+        final loadedStream = await pb.collection('streams').getOne(key);
+        streams[key] = loadedStream.data['title'];
+        await user.put('streamicon:${loadedStream.id}', loadedStream.data['icon']);
       } on ClientException catch (_) {
         streams[key] = 'NEEXISTUJE';
       }
@@ -197,6 +199,12 @@ class _SettingsPageState extends State<SettingsPage> {
             const Padding(
               padding: EdgeInsets.all(8.0),
               child: Text('Streamy'),
+            ),
+            OutlinedButton(
+              onPressed: () {
+                showDialog(context: context, builder: (context) => const AddStreamDialog(),);
+              },
+              child: const Text('Vytvořit stream')
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
@@ -546,6 +554,51 @@ class _EditStreamWidgetState extends State<EditStreamWidget> {
               IconButton(onPressed: () {}, icon: const Icon(Icons.remove_circle_outline)),
             ],
           )),
+        ],
+      ),
+    );
+  }
+}
+
+class AddStreamDialog extends StatefulWidget {
+  const AddStreamDialog({super.key});
+
+  @override
+  State<AddStreamDialog> createState() => _AddStreamDialogState();
+}
+
+class _AddStreamDialogState extends State<AddStreamDialog> {
+
+  final streamNameController = TextEditingController();
+  final streamIconController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Create Stream'),
+      actions: [
+        OutlinedButton(onPressed: () {Navigator.pop(context);}, child: const Text('Close')),
+        OutlinedButton(onPressed: () async {
+          final record = await pb.collection('streams').create(
+            body: {
+              'title': streamNameController.text,
+              'icon': streamIconController.text,
+              'admins': [pb.authStore.model.id],
+            }
+          );
+          Clipboard.setData(ClipboardData(text: record.id));
+        }, child: const Text('Add')),
+      ],
+      content: Column(
+        children: [
+          TextField(
+            controller: streamNameController,
+            decoration: const InputDecoration(labelText: 'Stream Name'),
+          ),
+          TextField(
+            controller: streamIconController,
+            decoration: const InputDecoration(labelText: 'Stream Icon'),
+          ),
         ],
       ),
     );

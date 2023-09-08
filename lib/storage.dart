@@ -12,6 +12,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'package:mobile_scanner/mobile_scanner.dart';
+// import 'package:flutter_markdown/flutter_markdown.dart' as md;
 
 // UTILS
 
@@ -460,7 +461,9 @@ class _TaskDialogState extends State<TaskDialog> {
             if (!editing) RichText(text: TextSpan(
               children: [
                 const TextSpan(text: 'Stream: ', style: TextStyle(fontWeight: FontWeight.bold)),
-                TextSpan(text: streamName)
+                TextSpan(text: streamName),
+                // const TextSpan(text: '       '),
+                // TextSpan(text: customIcons['streamicon:${widget.task?['stream']}'].toString()),
               ]
             )),
             if (editing) Padding(
@@ -586,22 +589,16 @@ class _TaskDialogState extends State<TaskDialog> {
                 ),
               ],
             )).toList(),
-            if (!editing) Row(
+            if (!editing) Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Flexible(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [RichText(text: TextSpan(
-                      children: [
-                        const TextSpan(text: 'Description: \n', style: TextStyle(fontWeight: FontWeight.bold)),
-                        TextSpan(text: widget.task!['description'])
-                      ]
-                    )),]
-                  ),
-                ),
-              ],
+                RichText(text: const TextSpan(text: 'Description: \n', style: TextStyle(fontWeight: FontWeight.bold))),
+                RichText(text: TextSpan(text: widget.task!['description'],)),
+              ]
             ),
+            // if (!editing) RichText(text: const TextSpan(text: 'Description:', style: TextStyle(fontWeight: FontWeight.bold))),
+            // if (!editing) Expanded(child: md.MarkdownBody(data: widget.task!['description'], shrinkWrap: false, fitContent: true,)),
             if (editing) TextField(
               controller: descriptionController,
               maxLines: null,

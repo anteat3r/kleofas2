@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'storage.dart';
 import 'dart:math';
 import 'dart:convert';
+import 'custom_icons.dart';
 // import 'package:flutter/foundation.dart';
 
 const List<String> czWeekDayNames = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'];
@@ -395,7 +396,7 @@ class _DayPageSate extends State<DayPage> {
                   children: [
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
-                      child: Icon(event.containsKey('time') ? Icons.tornado_rounded : Icons.event, size: 30,),
+                      child: Icon(event.containsKey('time') ? allIconsMap[user.get('streamicon:${event['stream']}')] ?? Icons.tornado_rounded : Icons.event, size: 30,),
                     ),
                     Expanded(child: Text((event.containsKey('time') ? '${event['subject'] ?? '?'} - ' : '') + (event.containsKey('time') ? event['title'] : event['Title']), style: const TextStyle(fontSize: 14), overflow: TextOverflow.ellipsis, maxLines: 1,))
                   ],

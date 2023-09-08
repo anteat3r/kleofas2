@@ -19,7 +19,8 @@ class _DevPageState extends State<DevPage> {
       appBar: AppBar(
         title: const Text("Query"),
         actions: [
-          IconButton(onPressed: () {logInfo(['TEST']);}, icon: const Icon(Icons.abc_rounded)),
+          // IconButton(onPressed: () {logInfo(['TEST']);}, icon: const Icon(Icons.abc_rounded)),
+          IconButton(onPressed: () {snacks.clear();}, icon: const Icon(Icons.cleaning_services_rounded)),
         ],
       ),
       body: loadScrollSnacksWrapper(context,

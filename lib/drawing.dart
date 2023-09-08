@@ -71,7 +71,9 @@ class _DrawingPageState extends State<DrawingPage> {
 
   Offset processOffset (Offset input) => (input - halfScreen - offset*scale)/scale;
 
-  void pushNewLayer (Offset initPoint) => layers.add(Layer(points: [processOffset(initPoint)], paint: curPaint, layerType: selectedLayerType));
+  void pushNewLayer (Offset initPoint) => layers.add(Layer(points: [processOffset(initPoint)],
+    paint: Paint()..color = curPaint.color..style = curPaint.style,
+  layerType: selectedLayerType));
 
   @override
   Widget build (BuildContext context) {

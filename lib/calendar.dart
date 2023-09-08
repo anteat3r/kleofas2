@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:kleofas2/storage.dart';
 import 'day.dart';
+import 'custom_icons.dart';
 
 int weekNumber(DateTime date) {
   int dayOfYear = int.parse(DateFormat("D").format(date));
@@ -124,7 +125,10 @@ class _CalendarPageSate extends State<CalendarPage> {
                               alignment: WrapAlignment.center,
                               direction: Axis.horizontal,
                               children: localEvents.length < 3
-                              ? ([for (var event in localEvents) Icon(event.containsKey('time') ? Icons.tornado_rounded : Icons.event, size: 15,)])
+                              ? ([for (var event in localEvents) Icon(
+                                event.containsKey('time')
+                                  ? allIconsMap[user.get('streamicon:${event['stream']}')] ?? Icons.tornado_rounded
+                                  : Icons.event, size: 15,)])
                               : [Icon(localEvents[0].containsKey('time') ? Icons.tornado_rounded : Icons.event, size: 15,), const Text('...')]
                             )
                           ],
