@@ -1,5 +1,13 @@
 // !$*UTF8*$!
 {
+	/*
+		TODO added manually
+	*/
+	SystemCapabilities = {
+		com.apple.BackgroundModes = {
+			enabled = 1;
+		};
+	};
 	archiveVersion = 1;
 	classes = {
 	};

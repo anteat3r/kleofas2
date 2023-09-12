@@ -36,17 +36,23 @@ Future<void> bgLoad () async {
   if (allDayNotifs.isNotEmpty || afternoonNotifs.isNotEmpty) {
     final localNotifs = FlutterLocalNotificationsPlugin();
     await localNotifs.initialize(const InitializationSettings(
-      android: AndroidInitializationSettings("icon")
+      android: AndroidInitializationSettings("icon"),
+      iOS: DarwinInitializationSettings(notificationCategories: [
+        DarwinNotificationCategory('kleofasAllDay'),
+        DarwinNotificationCategory('kleofasAfternoon'),
+      ]),
     ));
     final rng = Random();
     for (final notif in allDayNotifs) {
       await localNotifs.show(rng.nextInt(1000), notif.title, notif.body, const NotificationDetails(
-        android: AndroidNotificationDetails("kleofasAllDay", "Kleofáš celodenní notifikace (nové známky, změny rozvrhu)")
+        android: AndroidNotificationDetails("kleofasAllDay", "Kleofáš celodenní notifikace (nové známky, změny rozvrhu)"),
+        iOS: DarwinNotificationDetails(threadIdentifier: 'kleofasAllDay', categoryIdentifier: 'kleofasAllDay', subtitle: 'Kleofáš celodenní notifikace (nové známky, změny rozvrhu)'),
       ));
     }
     for (final notif in allDayNotifs) {
       await localNotifs.show(rng.nextInt(1000), notif.title, notif.body, const NotificationDetails(
-        android: AndroidNotificationDetails("kleofasAfternoon", "Kleofáš odpolední notifikace (úkoly na zítra, neomluvené absence)")
+        android: AndroidNotificationDetails("kleofasAfternoon", "Kleofáš odpolední notifikace (úkoly na zítra, neomluvené absence)"),
+        iOS: DarwinNotificationDetails(threadIdentifier: 'kleofasAfternoon', categoryIdentifier: 'kleofasAfternoon', subtitle: 'Kleofáš odpolední notifikace (úkoly na zítra, neomluvené absence)'),
       ));
     }
   }
