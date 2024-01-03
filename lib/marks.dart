@@ -128,7 +128,7 @@ class _MarksPageState extends State<MarksPage> {
                                       children: [
                                         TextSpan(
                                           text: subjectMarks['AverageText'].trim() == '' ? "? ? ?" : subjectMarks['AverageText'].trim(),
-                                          style: const TextStyle(fontSize: 20),
+                                          style: const TextStyle(fontSize: 20, color: Colors.white),
                                         ),
                                         TextSpan(
                                           text: '   ${subjectMarks['TemporaryMark']}',
