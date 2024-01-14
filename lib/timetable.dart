@@ -92,41 +92,43 @@ class _TimetablePageState extends State<TimetablePage> {
           shape: MaterialStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
           backgroundColor: MaterialStatePropertyAll(Colors.blue.shade900),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              czWeekDayNames[day['DayOfWeek']],
-              style: const TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 30,
-              ),
-            ),
-            Text(
-              DateFormat('d. M.').format(DateTime.parse(day['Date'])..add(const Duration(days: 1))),
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                fontSize: 12,
-              ),
-            ),
-            Wrap(
-              alignment: WrapAlignment.center,
-              direction: Axis.horizontal,
-              children: [for (final event in events) Container(
-                margin: const EdgeInsets.all(2),
-                width: Platform.isWindows ? 17 : 20,
-                height: Platform.isWindows ? 17 : 20,
-                child: Transform.translate(offset: const Offset(-3, 0), child:
-                  event != {}
-                  ? ( event.containsKey('time')
-                    ? Icon(allIconsMap[user.get('streamicon:${event['stream']}')] ?? Icons.tornado_rounded, size: Platform.isWindows ? 20 : 24,)
-                    : Icon(Icons.event, size: Platform.isWindows ? 20 : 24,) )
-                  : const Text('...')
+        child: OrientationBuilder(
+          builder: (context, orientation) => Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                czWeekDayNames[day['DayOfWeek']],
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 30,
                 ),
-              )],
-            )
-          ],
-        )
+              ),
+              Text(
+                DateFormat('d. M.').format(DateTime.parse(day['Date'])..add(const Duration(days: 1))),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 12,
+                ),
+              ),
+              if (orientation == Orientation.portrait) Wrap(
+                alignment: WrapAlignment.center,
+                direction: Axis.horizontal,
+                children: [for (final event in events) Container(
+                  margin: const EdgeInsets.all(2),
+                  width: Platform.isWindows ? 17 : 20,
+                  height: Platform.isWindows ? 17 : 20,
+                  child: Transform.translate(offset: const Offset(-3, 0), child:
+                    event != {}
+                    ? ( event.containsKey('time')
+                      ? Icon(allIconsMap[user.get('streamicon:${event['stream']}')] ?? Icons.tornado_rounded, size: Platform.isWindows ? 20 : 24,)
+                      : Icon(Icons.event, size: Platform.isWindows ? 20 : 24,) )
+                    : const Text('...')
+                  ),
+                )],
+              )
+            ],
+          ),
+        ),
       ),
     );
   }
