@@ -170,27 +170,35 @@ class _TimetablePageState extends State<TimetablePage> {
               )
           ),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              (hour == null || hour['TeacherId'] == null) ? (hour?["Change"]?["TypeAbbrev"] ?? '') : subjects[hour['SubjectId']]?['Abbrev'] ?? 'null',
-              style: const TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 20,
+        child: OrientationBuilder(
+          builder: (context, orientation) => Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                (hour == null || hour['TeacherId'] == null)
+                  ? (hour?["Change"]?["TypeAbbrev"] ?? '')
+                  : subjects[hour['SubjectId']]?['Abbrev'] ?? 'null',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 20,
+                ),
               ),
-            ),
-            Text(
-              (hour == null || hour['TeacherId'] == null) ? '' : (teachers[hour['TeacherId']]['Abbrev'] ?? 'null') + '\n' + (rooms[hour['RoomId']]['Abbrev'] ?? 'null') + '\n' + (groups[hour['GroupIds'][0]]['Abbrev'] ?? 'null'),
-              textAlign: TextAlign.left,
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                fontSize: 12,
+              if (orientation == Orientation.portrait) Text(
+                (hour == null || hour['TeacherId'] == null)
+                  ? ''
+                  : (teachers[hour['TeacherId']]['Abbrev'] ?? 'null') + '\n' +
+                    (rooms[hour['RoomId']]['Abbrev'] ?? 'null') + '\n' +
+                    (groups[hour['GroupIds'][0]]['Abbrev'] ?? 'null'),
+                textAlign: TextAlign.left,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 12,
+                ),
               ),
-            ),
-          ],
-        )
+            ],
+          ),
+        ),
       ),
     );
   }
