@@ -3,6 +3,9 @@ import 'package:http/http.dart';
 import 'package:result_type/result_type.dart';
 import 'package:html_unescape/html_unescape.dart';
 import 'dart:math';
+import 'dart:io';
+import 'package:html/dom.dart';
+import 'package:html/parser.dart';
 
 Future<Result<String, String>> login (String url, String username, String password) async {
   if (url.isEmpty) {
@@ -233,3 +236,60 @@ Future<void> submitLunches (String cookie) async {
   });
   assert(resp.statusCode == 200);
 }
+
+extension Flatten<T> on List<List<T>> {
+  List<T> flatten() => expand((element) => element).toList();
+}
+
+extension EmptyChildren on Element {
+  List<Element> getEmptyChildren() {
+    return children.map((e) => e.children.isEmpty ? [e] : e.getEmptyChildren()).toList().flatten();
+  }
+}
+
+enum CellColor { white, pink, green }
+
+typedef Cell = ({
+  String subject,
+  String teacher,
+  String room,
+  String group,
+  CellColor color,
+});
+
+typedef TimeTable = List<List<List<Cell>>>;
+
+TimeTable parseTimetable(Document html) => 
+  html
+  .querySelector(".bk-timetable-main")!
+  .querySelectorAll(".bk-timetable-row")
+  .map((e) => e.querySelectorAll(".bk-timetable-cell").map((d) => d.querySelectorAll(".day-item-hover").map((f) => (
+    room: f.querySelector(".right > div")?.innerHtml ?? "",
+    group: f.querySelector(".left > div")?.innerHtml ?? "",
+    subject: f.querySelector(".middle")?.innerHtml.trim() ?? "",
+    teacher: f.querySelector(".bottom > span")?.innerHtml.trim() ?? "",
+    color: f.classes.contains("pink")
+      ? CellColor.pink
+      : f.classes.contains("green")
+        ? CellColor.green
+        : CellColor.white
+  )).toList()).toList()).toList();
+
+typedef BakalariIds = ({
+  Map<String, String> classes,
+  Map<String, String> teachers,
+  Map<String, String> rooms,
+});
+
+BakalariIds convertBakalariIds(Map ids) => (
+  classes: ids["classes"]!,
+  teachers: ids["teachers"]!,
+  rooms: ids["rooms"]
+);
+
+BakalariIds parseBakalariIds(Document html) => 
+  convertBakalariIds({"classes": "Class", "teachers": "Teacher", "rooms": "Room"}.map((key, value) => MapEntry(
+    key, {for (final e in html.querySelector("#selected$value")!.children.where(
+      (f) => f.attributes.containsKey("value")))
+    e.attributes["value"]!: e.innerHtml.trim()} 
+  )));

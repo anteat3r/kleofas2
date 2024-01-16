@@ -11,6 +11,7 @@ import 'menu.dart';
 import 'calendar.dart';
 import 'password.dart';
 import 'drawing.dart';
+import 'scrape.dart';
 // import 'dart:io';fl
 
 class HomePage extends StatefulWidget {
@@ -104,8 +105,8 @@ class _HomePageState extends State<HomePage> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: <IconButton>[
                   IconButton(
-                    onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const MenuPage()));},
-                    icon: const Icon(Icons.soup_kitchen_outlined,),
+                    onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const ParsePage()));},
+                    icon: const Icon(Icons.paragliding_sharp,),
                     iconSize: 70,
                   ),
                   IconButton(

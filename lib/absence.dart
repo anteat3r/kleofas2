@@ -60,6 +60,7 @@ class _AbsencePageState extends State<AbsencePage> {
                   }
                 });
                 List absencesSubject = value.get('absence')?['AbsencesPerSubject'] ?? [];
+                absencesSubject.sort((a,b) => (b["Base"] / b["LessonsCount"]).compareTo(a["Base"] / a["LessonsCount"]));
                 return Column(
                   children: [
                     ...List.generate(absences.length, (index) {

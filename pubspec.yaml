@@ -27,6 +27,7 @@ dependencies:
   flutter_colorpicker: ^1.0.3
   mobile_scanner: ^3.4.1
   # flutter_markdown: ^0.6.17+2
+  html: ^0.15.4
   qr_flutter: ^4.1.0
 
 dev_dependencies:

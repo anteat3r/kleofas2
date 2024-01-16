@@ -34,32 +34,34 @@ class _TimetablePageState extends State<TimetablePage> {
           shape: MaterialStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
           backgroundColor: MaterialStatePropertyAll(Colors.blue.shade900),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              hour['Caption'],
-              style: const TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 20,
+        child: OrientationBuilder(
+          builder: (context, orientation) => Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                hour['Caption'],
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 20,
+                ),
               ),
-            ),
-            Text(
-              hour['BeginTime'],
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                fontSize: 12,
+              if (orientation == Orientation.portrait) Text(
+                hour['BeginTime'],
+                style: const TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 12,
+                ),
               ),
-            ),
-            Text(
-              hour['EndTime'],
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                fontSize: 12,
+              if (orientation == Orientation.portrait) Text(
+                hour['EndTime'],
+                style: const TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 12,
+                ),
               ),
-            ),
-          ],
-        )
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -103,7 +105,7 @@ class _TimetablePageState extends State<TimetablePage> {
                   fontSize: 30,
                 ),
               ),
-              Text(
+              if (orientation == Orientation.portrait) Text(
                 DateFormat('d. M.').format(DateTime.parse(day['Date'])..add(const Duration(days: 1))),
                 style: const TextStyle(
                   fontWeight: FontWeight.w500,
