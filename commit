@@ -1,3 +1,6 @@
-git add .
-git commit -m '$1'
-git push origin main
+#!/bin/bash
+read -p "Commit description: " desc
+git add . && \
+git add -u && \
+git commit -m "$desc" && \
+git push heroku master
