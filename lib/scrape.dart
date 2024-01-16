@@ -97,7 +97,6 @@ class _ParsePageState extends State<ParsePage> {
           showDialog(context: context, builder: (BuildContext context) {
             return AlertDialog(
               title: const Text('Den'),
-              // content: Text('Datum: ${czDate(day["Date"])}\nPopis: ${day["DayDescription"]}\nTyp: ${day["DayType"]}'),
               content: SingleChildScrollView(scrollDirection: Axis.horizontal, child: Text(const JsonEncoder.withIndent('    ').convert({...day}..remove('Atoms')))),
               actions: [
                 TextButton(onPressed: () {Navigator.pop(context);}, child: const Text('Ok'))
@@ -351,7 +350,12 @@ class _ParsePageState extends State<ParsePage> {
                       timeTable!.length, (index) {
                         return TableRow(
                           children: [
-                            dayCell({"DayOfWeek": index+1, "Date": DateTime.now().toString()}, (maxHeight - 70)/5),
+                            dayCell({
+                              "DayOfWeek": index+1,
+                              "Date": DateTime
+                                .now()
+                                .add(Duration(days: (timeTableType == TimeTableType.next ? 1 : 0)*7-DateTime.now().weekday+1+index)).toString()
+                            }, (maxHeight - 70)/5),
                             ...List.generate(
                               timeTable!.map((e) => e.length).fold(0, max), (index2) => Column(
                                 children: timeTable![index][index2].map((e) => hourCell(e, (maxHeight - 70)/5/(timeTable![index][index2].length))).toList(),
