@@ -1,9 +1,8 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'storage.dart';
 import 'day.dart';
+import 'storage.dart';
 
 class MarksPage extends StatefulWidget{
   const MarksPage({Key? key}) : super(key: key);
@@ -14,7 +13,21 @@ class MarksPage extends StatefulWidget{
 class _MarksPageState extends State<MarksPage> {
   String currentSubject = '';
   bool showSubjects = false;
+  List marksPerm = [];
+  Map subjectsPerm = {};
+  bool whatif = false;
+  List<Map> addedMarks = [];
+  
   //Map mapListToMap (List list, {String id = 'Id'}) => {for (Map item in list) item[id]: item};
+
+  void updateWhatIf () => loadingSnack(() async {
+    print(marksPerm + addedMarks);
+    await loadPostJsonEndpoint("marks:whatif", url: 'marks/what-if', body: marksPerm + addedMarks);
+    setState(() {
+      whatif = true;
+    });
+  });
+
 
   @override
   Widget build (BuildContext context) {
@@ -40,13 +53,89 @@ class _MarksPageState extends State<MarksPage> {
                 return Text(czDate(DateTime.fromMillisecondsSinceEpoch(value.get('marks') ?? 0).toString()));
               }
             ),
+            ...addedMarks.map((addedMark) => Row(
+              children: [
+                Text(addedMark['MarkText'].toString()),
+                Text(getId(addedMark['SubjectId']).name),
+                Text(addedMark['TypeNote'].toString()),
+              ],
+            )).toList(),
+            OutlinedButton(
+              onPressed: () {
+                // print(subjectsPerm);
+                showDialog(context: context, builder: (context) => StatefulBuilder(
+                    builder: (context2, setState2) {
+                      String selectedSubjectId = subjectsPerm.values.first['Id'];
+                      int selectedWeight = 1;
+                      String selectedMark = "1";
+                      // print(subjectsPerm);
+                      return AlertDialog(
+                        title: const Text('Add Expected Mark'),
+                        actions: [
+                          OutlinedButton(onPressed: () {Navigator.pop(context);}, child: const Text('Cancel')),
+                          OutlinedButton(onPressed: () {
+                            addedMarks.add({
+                              'Id': null,
+                              'MarkText': selectedMark,
+                              'Weight': selectedWeight,
+                              'SubjectId': selectedSubjectId,
+                              'MaxPoints': 0,
+                            });
+                            updateWhatIf();
+                          }, child: const Text('Ok')),
+                        ],
+                        content: Column(
+                          children: [
+                            DropdownButton<String>(
+                              items: subjectsPerm.values.map((e) => DropdownMenuItem(value: e['Id'].toString(), child: Text(e['Name'].toString(),))).toList(),
+                              onChanged: (newval) {
+                                if (newval == null) return;
+                                setState2(() {
+                                  selectedSubjectId = newval;
+                                });
+                              },
+                              value: selectedSubjectId,
+                            ),
+                            DropdownButton<int>(
+                              items: List.generate(10, (index) => DropdownMenuItem(value: index+1, child: Text((index+1).toString()))),
+                              onChanged: (newval) {
+                                if (newval == null) return;
+                                setState2(() {
+                                  selectedWeight = newval;
+                                });
+                              },
+                              value: selectedWeight,
+                            ),
+                            DropdownButton<String>(
+                              items: ["1","1-","2","2-","3","3-","4","4-","5",].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                              onChanged: (newval) {
+                                if (newval == null) return;
+                                setState2(() {
+                                  selectedMark = newval;
+                                });
+                              },
+                              value: selectedMark,
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                ));
+              },
+              child: const Text('Add Expected Mark'),
+            ),
             ValueListenableBuilder(
               valueListenable: storage.listenable(),
               builder: (BuildContext context, Box<Map> value, child) {
-                List marksRaw = value.get('marks')?['Subjects'] ?? [];
+                List marksRaw = value.get(whatif ? 'marks:whatif' : 'marks')?['Subjects'] ?? [];
                 List marks = [for (Map subject in marksRaw.where((element) => currentSubject == '' ? true : currentSubject == element['Subject']['Id'])) ...subject['Marks']];
                 marks.sort((a, b) => b['EditDate'].compareTo(a['EditDate']));
                 Map subjects = mapListToMap(marksRaw.map((e) => e['Subject']).toList());
+                // print(subjects);
+                if (!whatif) {
+                  marksPerm = marks;
+                  subjectsPerm = subjects;
+                }
                 return Column(
                   children: [
                     OutlinedButton(onPressed: () {setState(() {showSubjects = !showSubjects;});}, child: Text(showSubjects ? 'Hide' : 'Show')),

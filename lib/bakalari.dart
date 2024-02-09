@@ -3,9 +3,7 @@ import 'package:http/http.dart';
 import 'package:result_type/result_type.dart';
 import 'package:html_unescape/html_unescape.dart';
 import 'dart:math';
-import 'dart:io';
 import 'package:html/dom.dart';
-import 'package:html/parser.dart';
 
 Future<Result<String, String>> login (String url, String username, String password) async {
   if (url.isEmpty) {
@@ -38,8 +36,21 @@ Future<Result<Map, String>> query (String url, String token, String endpoint, [M
   } else {
     rqUri = Uri.https(url, '/api/3/$endpoint', payload);
   }
-  // Uri rqUri = Uri.parse('$url/api/3/$endpoint');
   Response response = await get(rqUri, headers: {"Content-Type": "application/x-www-form-urlencoded", "Authorization": "Bearer $token"});
+  if (response.statusCode == 200) {
+    return Success(jsonDecode(response.body));
+  }
+  return Failure(response.body);
+}
+
+Future<Result<Map, String>> postJsonQuery (String url, String token, String endpoint, {Map<String, dynamic>? payload, Object? body}) async {
+  Uri? rqUri;
+  if (url.contains('/')) {
+    rqUri = Uri.https(url.split('/')[0], '${url.split('/')[1]}/api/3/$endpoint', payload);
+  } else {
+    rqUri = Uri.https(url, '/api/3/$endpoint', payload);
+  }
+  Response response = await post(rqUri, headers: {"Content-Type": "application/json", "Authorization": "Bearer $token"}, body: jsonEncode(body));
   if (response.statusCode == 200) {
     return Success(jsonDecode(response.body));
   }

@@ -312,6 +312,24 @@ Future<void> loadEndpoint (String endpoint, [String? url, Map<String, dynamic>? 
   }
 }
 
+Future<void> loadPostJsonEndpoint (String endpoint, {String? url, Map<String, dynamic>? payload, bool secondAttempt = false, Object? body}) async {
+  Result res = await postJsonQuery(getPassword("bakalari", "url"), user.get('token') ?? '', url ?? endpoint, payload: payload, body: body);
+  if (res.isFailure) {
+    if (secondAttempt) throw AssertionError(res.failure);
+    await loginUser();
+    loadPostJsonEndpoint(endpoint, url: url, payload: payload, secondAttempt: true);
+    return;
+  }
+  if (res.isSuccess) {
+    await Future.wait([
+      storage.put(endpoint, res.success),
+      refresh.put(endpoint, DateTime.now().millisecondsSinceEpoch)
+    ]);
+  } else {
+    throw AssertionError('bruh');
+  }
+}
+
 Future<void> loadTasks () async {
   final tasks = await pb.collection('tasks').getFullList(
     expand: 'author,stream',

@@ -262,6 +262,18 @@ class _ParsePageState extends State<ParsePage> {
   Widget build (BuildContext context) {
     AppBar appBar = AppBar(
       title: const Text('Timetable'),
+      actions: [
+        DropdownButton(
+          items: TimeTableType.values.map((e) => DropdownMenuItem(value: e, child: Text(stringifyTimeTableType(e)))).toList(),
+          onChanged: (newval) {
+            if (newval == null) return;
+            timeTableType = newval;
+            if (selectedType == null) return;
+            loadParsedTimeTable();
+          },
+          value: timeTableType,
+        ),
+      ],
     );
     double maxHeight = MediaQuery.of(context).size.height - appBar.preferredSize.height - MediaQuery.of(context).padding.top - 19;
     return Scaffold(
@@ -272,16 +284,6 @@ class _ParsePageState extends State<ParsePage> {
             if (classOpts != null && teacherOpts != null && roomOpts != null) Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                DropdownButton(
-                  items: TimeTableType.values.map((e) => DropdownMenuItem(value: e, child: Text(stringifyTimeTableType(e)))).toList(),
-                  onChanged: (newval) {
-                    if (newval == null) return;
-                    timeTableType = newval;
-                    if (selectedType == null) return;
-                    loadParsedTimeTable();
-                  },
-                  value: timeTableType,
-                ),
                 DropdownButton(
                   items: classOpts?.keys.map((e) => DropdownMenuItem(
                     value: e,
