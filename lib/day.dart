@@ -86,7 +86,7 @@ String formatczDate(DateTime date) {
 class DayWidget extends StatelessWidget {
   final DateTime date;
   final bool year;
-  const DayWidget(this.date, {this.year = false, Key? key}): super(key: key);
+  const DayWidget(this.date, {this.year = false, super.key});
 
   @override
   Widget build (BuildContext context) {
@@ -112,7 +112,8 @@ class DayWidget extends StatelessWidget {
 
 class DayPage extends StatefulWidget {
   final DateTime date;
-  const DayPage(this.date, {Key? key}): super(key: key);
+  final String? teacherId;
+  const DayPage(this.date, {super.key, this.teacherId});
   @override
   State<DayPage> createState() => _DayPageSate();
 }
@@ -200,9 +201,12 @@ class _DayPageSate extends State<DayPage> {
 
   @override
   Widget build (BuildContext context) {
-    List events = List.from(storage.get('events')?['Events'] ?? []);
+    List events = List.from(storage.get(widget.teacherId == null ? 'events' : 'events:all')?['Events'] ?? []);
     events.addAll(storage.get('tasks')?['Tasks'] ?? []);
-    events = events.where((element) => isEventInvolved(element, widget.date)).toList();
+    if (widget.teacherId != null) {
+      events = events.where((element) => element.toString().contains(widget.teacherId!)).toList();
+    }
+    events = events.where((element) => isEventInvolved(element, widget.date),).toList();
     return Scaffold(
       appBar: AppBar(
         title: Text('${czWeekDayNames[widget.date.weekday]} ${DateFormat('d. M. y').format(widget.date)}, ${formatczDate(widget.date)}')

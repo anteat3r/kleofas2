@@ -19,7 +19,7 @@ DateTime roundDateTime (DateTime date) {
 }
 
 class ParsePage extends StatefulWidget{
-  const ParsePage({Key? key}) : super(key: key);
+  const ParsePage({super.key});
   @override
   State<ParsePage> createState() => _ParsePageState();
 }
@@ -81,10 +81,13 @@ class _ParsePageState extends State<ParsePage> {
     );
   }
 
-  Widget dayCell (Map day, double height) {
-    List events = List.from(storage.get('events')?['Events'] ?? []);
+  Widget dayCell (Map day, double height, [String? teacherId]) {
+    List events = List.from(storage.get(teacherId == null ? 'events' : 'events:all')?['Events'] ?? []);
     events.addAll(storage.get('tasks')?['Tasks'] ?? []);
-    day['Date'] = roundDateTime(DateTime.parse(day['Date'])).toIso8601String();
+    day['Date'] = DateTime.parse(day['Date']).toIso8601String();
+    if (teacherId != null) {
+      events = events.where((element) => element.toString().contains(teacherId)).toList();
+    }
     events = events.where((element) => isEventInvolved(element, day['Date']),).toList();
     if (events.length > 4) {
       events = events.sublist(0, 3) + [{}];
@@ -92,7 +95,7 @@ class _ParsePageState extends State<ParsePage> {
     return SizedBox(
       height: height,
       child: ElevatedButton(
-        onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => DayPage(DateTime.parse(day['Date']))));},
+        onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => DayPage(DateTime.parse(day['Date']),teacherId: teacherId,)));},
         onLongPress: () {
           showDialog(context: context, builder: (BuildContext context) {
             return AlertDialog(
@@ -331,6 +334,13 @@ class _ParsePageState extends State<ParsePage> {
                 ),
               ],
             ),
+            if (selectedType == SelectedIdType.teachers) OutlinedButton(
+              onPressed: () {
+                loadEndpointSnack('events:all', url: 'events/all');
+                setState(() { });
+              },
+              child: const Text('Reload all events'),
+            ),
             if (timeTable != null) SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: SizedBox(
@@ -357,10 +367,12 @@ class _ParsePageState extends State<ParsePage> {
                               "Date": DateTime
                                 .now()
                                 .add(Duration(days: (timeTableType == TimeTableType.next ? 1 : 0)*7-DateTime.now().weekday+1+index)).toString()
-                            }, (maxHeight - 70)/5),
+                            }, (maxHeight - 95)/5,
+                            selectedType == SelectedIdType.teachers ? selectedId : null,
+                            ),
                             ...List.generate(
                               timeTable!.map((e) => e.length).fold(0, max), (index2) => Column(
-                                children: timeTable![index][index2].map((e) => hourCell(e, (maxHeight - 70)/5/(timeTable![index][index2].length))).toList(),
+                                children: timeTable![index][index2].map((e) => hourCell(e, (maxHeight - 95)/5/(timeTable![index][index2].length))).toList(),
                               )
                             )
                           ],

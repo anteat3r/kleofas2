@@ -5,7 +5,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'storage.dart';
 
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({Key? key}) : super(key: key);
+  const SettingsPage({super.key});
   @override
   State<SettingsPage> createState() => _SettingsPageState();
 }
@@ -40,6 +40,33 @@ class _SettingsPageState extends State<SettingsPage> {
      }
     }
     setState(() {});
+  }
+
+  void save() {
+    loadingSnack(() async {
+      if (streams.contains('NEEXISTUJE') || adminStreams.contains('NEEXITUJE')) {
+        globalShowDialog((context) => const AlertDialog(
+          title: Text('Stream neexistuje'),
+          content: Text('Pokusil jsi se uložit stream, který neexistuje.'),));
+        return;
+      }
+      if (streams.contains('NEJSI ADMIN')) {
+        globalShowDialog((context) => const AlertDialog(
+          title: Text('Nejsi admin'),
+          content: Text('Pokusil jsi se uložit stream, jehož nejsi admin, jako admin stream.'),));
+        return;
+      }
+      final NavigatorState navigator = Navigator.of(context);
+      await user.put('event_type', eventType.toString());
+      // await user.put('qrpath', qrpath);
+      await user.put('autoreload', autoreload ? 'true' : '');
+      await user.put('notifdur', notifdurcontroller.text);
+      await user.put('notifstart', notifstartcontroller.text);
+      await user.put('notifend', notifendcontroller.text);
+      await user.put('streams', streams.join(','));
+      await user.put('adminstreams', adminStreams.join(','));
+      navigator.pop();
+    });
   }
 
   @override
@@ -84,73 +111,73 @@ class _SettingsPageState extends State<SettingsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Text('Načítat události:'),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: ListTile(
-                title: const Text('my'),
-                leading: Radio<EventType>(
-                  value: EventType.my,
-                  groupValue: eventType,
-                  onChanged: (EventType? value) {
-                    if (value == null) return;
-                    setState(() {
-                      eventType = EventType.my;
-                    });
-                  },
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: ListTile(
-                title: const Text('all'),
-                leading: Radio<EventType>(
-                  value: EventType.all,
-                  groupValue: eventType,
-                  onChanged: (EventType? value) {
-                    if (value == null) return;
-                    setState(() {
-                      eventType = EventType.all;
-                    });
-                  },
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: ListTile(
-                title: const Text('public'),
-                leading: Radio<EventType>(
-                  value: EventType.public,
-                  groupValue: eventType,
-                  onChanged: (EventType? value) {
-                    if (value == null) return;
-                    setState(() {
-                      eventType = EventType.public;
-                    });
-                  },
-                ),
-              ),
-            ),
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Text('Pohlaví'),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: ListTile(
-                title: const Text('Útočná helikoptéra'),
-                leading: Radio<Gender>(
-                  value: Gender.civilAttackHelicopter,
-                  groupValue: Gender.civilAttackHelicopter,
-                  onChanged: (Gender? value) {},
-                ),
-              ),
-            ),
+            // const Padding(
+            //   padding: EdgeInsets.all(8.0),
+            //   child: Text('Načítat události:'),
+            // ),
+            // Padding(
+            //   padding: const EdgeInsets.all(8.0),
+            //   child: ListTile(
+            //     title: const Text('my'),
+            //     leading: Radio<EventType>(
+            //       value: EventType.my,
+            //       groupValue: eventType,
+            //       onChanged: (EventType? value) {
+            //         if (value == null) return;
+            //         setState(() {
+            //           eventType = EventType.my;
+            //         });
+            //       },
+            //     ),
+            //   ),
+            // ),
+            // Padding(
+            //   padding: const EdgeInsets.all(8.0),
+            //   child: ListTile(
+            //     title: const Text('all'),
+            //     leading: Radio<EventType>(
+            //       value: EventType.all,
+            //       groupValue: eventType,
+            //       onChanged: (EventType? value) {
+            //         if (value == null) return;
+            //         setState(() {
+            //           eventType = EventType.all;
+            //         });
+            //       },
+            //     ),
+            //   ),
+            // ),
+            // Padding(
+            //   padding: const EdgeInsets.all(8.0),
+            //   child: ListTile(
+            //     title: const Text('public'),
+            //     leading: Radio<EventType>(
+            //       value: EventType.public,
+            //       groupValue: eventType,
+            //       onChanged: (EventType? value) {
+            //         if (value == null) return;
+            //         setState(() {
+            //           eventType = EventType.public;
+            //         });
+            //       },
+            //     ),
+            //   ),
+            // ),
+            // const Padding(
+            //   padding: EdgeInsets.all(8.0),
+            //   child: Text('Pohlaví'),
+            // ),
+            // Padding(
+            //   padding: const EdgeInsets.all(8.0),
+            //   child: ListTile(
+            //     title: const Text('Útočná helikoptéra'),
+            //     leading: Radio<Gender>(
+            //       value: Gender.civilAttackHelicopter,
+            //       groupValue: Gender.civilAttackHelicopter,
+            //       onChanged: (Gender? value) {},
+            //     ),
+            //   ),
+            // ),
             // const Padding(
             //   padding: EdgeInsets.all(8.0),
             //   child: Text('Qr kód'),
@@ -240,7 +267,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           }, icon: const Icon(Icons.edit_rounded)
                         ),
                       ],
-                    )).toList(),
+                    )),
                     Row(
                       children: [
                         Expanded(
@@ -347,6 +374,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       controller: notifstartcontroller,
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      onSubmitted: (_) {save();},
                     ),
                   ),
                   const Padding(
@@ -360,6 +388,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         controller: notifendcontroller,
                         keyboardType: TextInputType.number,
                         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        onSubmitted: (_) {save();},
                       ),
                     ),
                   ),
@@ -369,32 +398,7 @@ class _SettingsPageState extends State<SettingsPage> {
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: OutlinedButton(
-                onPressed: () {
-                  loadingSnack(() async {
-                    if (streams.contains('NEEXISTUJE') || adminStreams.contains('NEEXITUJE')) {
-                      globalShowDialog((context) => const AlertDialog(
-                        title: Text('Stream neexistuje'),
-                        content: Text('Pokusil jsi se uložit stream, který neexistuje.'),));
-                      return;
-                    }
-                    if (streams.contains('NEJSI ADMIN')) {
-                      globalShowDialog((context) => const AlertDialog(
-                        title: Text('Nejsi admin'),
-                        content: Text('Pokusil jsi se uložit stream, jehož nejsi admin, jako admin stream.'),));
-                      return;
-                    }
-                    final NavigatorState navigator = Navigator.of(context);
-                    await user.put('event_type', eventType.toString());
-                    // await user.put('qrpath', qrpath);
-                    await user.put('autoreload', autoreload ? 'true' : '');
-                    await user.put('notifdur', notifdurcontroller.text);
-                    await user.put('notifstart', notifstartcontroller.text);
-                    await user.put('notifend', notifendcontroller.text);
-                    await user.put('streams', streams.join(','));
-                    await user.put('adminstreams', adminStreams.join(','));
-                    navigator.pop();
-                  });
-                },
+                onPressed: save,
                 child: const Text('Save')
               ),
             ),

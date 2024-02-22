@@ -17,7 +17,7 @@ DateTime roundDateTime (DateTime date) {
 }
 
 class CalendarPage extends StatefulWidget {
-  const CalendarPage({Key? key}): super(key: key);
+  const CalendarPage({super.key});
   @override
   State<CalendarPage> createState() => _CalendarPageSate();
 }

@@ -7,7 +7,6 @@ import 'dart:convert';
 
 AlertDialog eventDialog(Map event, BuildContext context) => AlertDialog(
     title: const Text('Event'),
-    // content: SingleChildScrollView(child: Text('Title: ${event["Title"]}\nDescription: ${event["Description"]}\nEvent Type:\n\tAbbrev: ${event["EventType"]["Abbrev"]}\n\tName: ${event["EventType"]["Name"]}\nNote: ${event["Note"]}\nDate Changed: ${czDate(event["DateChanged"])}\nTimes:${event["Times"].map((e) => "\n\tTime:\n\t\tWhole Day: ${e['WholeDay']}\n\t\tStart Time: ${czDate(e['StartTime'])}\n\t\tEnd Time: ${czDate(e['EndTime'])}\n\t\tInterval Start Time: ${czDate(e['IntervalStartTime'])}\n\t\tInterval End Time: ${czDate(e['IntervalEndTime'])}").join("\n\t")}\nClasses:${event["Classes"].map((e) => "\n\tClass:\n\t\tAbbrev: ${e['Abbrev']}\n\t\tName: ${e['Name']}").join("\n\t")}\nClass Sets: TO DO\nTeachers:${event["Teachers"].map((e) => "\n\tTeacher:\n\t\tAbbrev: ${e['Abbrev']}\n\t\tName: ${e['Name']}").join("\n\t")}\nTeacher Sets: TO DO\nRooms:${event["Rooms"].map((e) => "\n\tRoom:\n\t\tAbbrev: ${e['Abbrev']}\n\t\tName: ${e['Name']}").join("\n\t")}\nRoom Sets: TO DO\nStudents:${event["Students"].map((e) => "\n\tName: ${e['Name']}").join("\n\t")}')),
     content: SingleChildScrollView(child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: Text(const JsonEncoder.withIndent(' ').convert(event))))),
     actions: [
       TextButton(
@@ -20,7 +19,7 @@ AlertDialog eventDialog(Map event, BuildContext context) => AlertDialog(
   );
 
 class EventsPage extends StatefulWidget {
-  const EventsPage({Key? key}) : super(key: key);
+  const EventsPage({super.key});
   @override
   State<EventsPage> createState() => _EventsPageState();
 }
@@ -31,6 +30,7 @@ class _EventsPageState extends State<EventsPage> {
   DateTime? dateFilter;
   final stringFilterController = TextEditingController();
   DateTime? appliedDateFilter;
+  String currentPath = 'events';
 
   @override
   Widget build(BuildContext context) {
@@ -38,16 +38,16 @@ class _EventsPageState extends State<EventsPage> {
       title: const Text('Events'),
       actions: [
         Switch(
-            value: showTasks,
-            onChanged: (bool newvalue) {
-              setState(() {
-                showTasks = newvalue;
-              });
-            }),
+          value: showTasks,
+          onChanged: (bool newvalue) {
+            setState(() {
+              showTasks = newvalue;
+            });
+          }),
         IconButton(
           onPressed: () {
             setState(() {
-              loadEndpointSnack('events', url: 'events${eventNames[user.get('event_type') ?? "EventType.my"]}');
+              loadEndpointSnack('events', url: 'events/my');
             });
           },
           icon: const Icon(Icons.refresh_rounded)
@@ -63,7 +63,7 @@ class _EventsPageState extends State<EventsPage> {
             ValueListenableBuilder(
               valueListenable: refresh.listenable(),
               builder: (BuildContext context, Box<int> value, child) {
-                return Text(czDate(DateTime.fromMillisecondsSinceEpoch(value.get('events') ?? 0).toString()));
+                return Text(czDate(DateTime.fromMillisecondsSinceEpoch(value.get(currentPath) ?? 0).toString()));
               }
             ),
             Row(
@@ -72,20 +72,23 @@ class _EventsPageState extends State<EventsPage> {
                 OutlinedButton(
                   onPressed: () {
                     loadEndpointSnack('events', url: 'events/my');
+                    currentPath = 'events';
                   },
-                  child: const Text('Load My')
+                  child: const Text('Load My'),
                 ),
                 OutlinedButton(
                   onPressed: () {
-                    loadEndpointSnack('events', url: 'events');
+                    loadEndpointSnack('events:all', url: 'events');
+                    currentPath = 'events:all';
                   },
-                  child: const Text('Load All')
+                  child: const Text('Load All'),
                 ),
                 OutlinedButton(
                   onPressed: () {
-                    loadEndpointSnack('events', url: 'events/public');
+                    loadEndpointSnack('events:public', url: 'events/public');
+                    currentPath = 'events:public';
                   },
-                  child: const Text('Load Public')
+                  child: const Text('Load Public'),
                 ),
               ],
             ),
@@ -152,14 +155,14 @@ class _EventsPageState extends State<EventsPage> {
             ValueListenableBuilder(
               valueListenable: storage.listenable(),
               builder: (BuildContext context, Box<Map> storage_, child) {
-                List events = List.from(storage_.get('events')?['Events'] ?? []);
+                List events = List.from(storage_.get(currentPath)?['Events'] ?? []);
                 // events.addAll(storage_.get('tasks')?['Tasks'] ?? []);
                 return Column(children: <Widget>[
                   ...List.generate(events.length, (index) {
                     Map event = events[index];
-                    if (!event.toString().contains(stringFilter)) return [];
+                    if (!event.toString().contains(stringFilter)) return <Widget>[];
                     if (appliedDateFilter != null) {
-                      if (!event.toString().contains(DateFormat('yyyy-MM-dd').format(appliedDateFilter!))) return [];
+                      if (!event.toString().contains(DateFormat('yyyy-MM-dd').format(appliedDateFilter!))) return <Widget>[];
                     }
                     return [
                       Padding(
@@ -167,7 +170,7 @@ class _EventsPageState extends State<EventsPage> {
                         child: eventWidget(context, event),
                       )
                     ];
-                  }).expand((e) => e).toList(),
+                  }).expand((e) => e),
                 ]);
               }
             )

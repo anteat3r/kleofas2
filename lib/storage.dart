@@ -171,7 +171,11 @@ Future<String?> showQrDialog (BuildContext context, String title) {
 }
 
 Future<void> initHive () async {
-  await Hive.initFlutter();
+  if (Platform.isLinux) {
+    Hive.init("~/.kleofas");
+  } else {
+    Hive.initFlutter();
+  }
   await Hive.openBox<String>('user');
   await Hive.openBox<Map>('storage');
   await Hive.openBox<int>('refresh');
@@ -352,7 +356,7 @@ Future<void> loadTasks () async {
 }
 
 Future<void> loadEvents ([String? url]) async {
-  await loadEndpoint('events', url ?? 'events/${user.get('event_type')?.split(".")[1] ?? "my"}');
+  await loadEndpoint('events', url ?? 'events/my');
   final List events = storage.get('events')?['Events'] ?? [];
   for (Map event in events) {
     setId(event['Id'], event['Title'], event['Title']);
@@ -636,7 +640,7 @@ class _TaskDialogState extends State<TaskDialog> {
                   ),
                 ),
               ],
-            )).toList(),
+            )),
             if (!editing) Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,

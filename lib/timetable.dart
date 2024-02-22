@@ -16,13 +16,14 @@ DateTime roundDateTime (DateTime date) {
 }
 
 class TimetablePage extends StatefulWidget{
-  const TimetablePage({Key? key}) : super(key: key);
+  const TimetablePage({super.key});
   @override
   State<TimetablePage> createState() => _TimetablePageState();
 }
 
 class _TimetablePageState extends State<TimetablePage> {
   DateTime curDate = DateTime.now();
+  DateTime initDate = DateTime.now();
   final List<String> czWeekDayNames = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'];
 
   Widget hourTitleCell (Map hour, double maxHeight) {
@@ -217,20 +218,20 @@ class _TimetablePageState extends State<TimetablePage> {
             final pickedDate = await showDatePicker(context: context, initialDate: curDate, firstDate: DateTime(1969), lastDate: DateTime(2069));
             if (pickedDate == null) return;
             curDate = pickedDate;
-            setState(() { loadingSnack(() => loadTimeTable(curDate)); });
+            setState(() { loadEndpointSnack('timetable:temp', url: 'timetable/actual', payload: {'date': DateFormat('yyyy-MM-dd').format(curDate)}); });
           },
           icon: const Icon(Icons.date_range)
         ),
         IconButton(
           onPressed: () {
             curDate = curDate.subtract(const Duration(days: 7));
-            setState(() { loadEndpointSnack('timetable', url: 'timetable/actual', payload: {'date': DateFormat('yyyy-MM-dd').format(curDate)}); });
+            setState(() { loadEndpointSnack('timetable:temp', url: 'timetable/actual', payload: {'date': DateFormat('yyyy-MM-dd').format(curDate)}); });
           },
           icon: const Icon(Icons.arrow_left_rounded)
         ),
         IconButton(
           onPressed: () {
-              curDate = DateTime.now();
+            curDate = DateTime.now();
             setState(() { loadEndpointSnack('timetable', url: 'timetable/actual'); });
           },
           icon: const Icon(Icons.refresh_rounded)
@@ -238,7 +239,7 @@ class _TimetablePageState extends State<TimetablePage> {
         IconButton(
           onPressed: () {
             curDate = curDate.add(const Duration(days: 7));
-            setState(() { loadEndpointSnack('timetable', url: 'timetable/actual', payload: {'date': DateFormat('yyyy-MM-dd').format(curDate)}); });
+            setState(() { loadEndpointSnack('timetable:temp', url: 'timetable/actual', payload: {'date': DateFormat('yyyy-MM-dd').format(curDate)}); });
           },
           icon: const Icon(Icons.arrow_right_rounded)
         ),
@@ -259,7 +260,10 @@ class _TimetablePageState extends State<TimetablePage> {
             ValueListenableBuilder(
               valueListenable: storage.listenable(),
               builder: (BuildContext context, Box<Map> value, child) {
-                List getElem (String name) => value.get('timetable')?[name] ?? [];
+                List getElem (String name) => value.get(
+                  initDate.year == curDate.year &&
+                  initDate.month == curDate.month &&
+                  initDate.day == curDate.day ? 'timetable' : 'timetable:temp')?[name] ?? [];
                 List hours = getElem('Hours');
                 List days = getElem('Days');
                 hours = hours.sublist(max(0, hours.indexWhere((element) => days.any((day) => day['Atoms'].any((atom) => atom['HourId'] == element['Id'])))), hours.lastIndexWhere((element) => days.any((day) => day['Atoms'].any((atom) => atom['HourId'] == element['Id']))) + 1);
