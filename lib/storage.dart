@@ -174,7 +174,7 @@ Future<void> initHive () async {
   if (Platform.isLinux) {
     Hive.init("~/.kleofas");
   } else {
-    Hive.initFlutter();
+    await Hive.initFlutter();
   }
   await Hive.openBox<String>('user');
   await Hive.openBox<Map>('storage');
