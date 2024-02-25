@@ -159,7 +159,7 @@ class _ParsePageState extends State<ParsePage> {
         onPressed: () {
           showDialog(context: context, builder: (context) => AlertDialog(
             title: const Text("Detail hodiny"),
-            content: Text("${hour.subject}\n${hour.teacher}\n${hour.room}\n${hour.group}\n"),
+            content: Text("${hour.subject}\n${hour.teacher}\n${hour.room}\n${hour.group}\n${hour.detail}\n"),
             actions: [
               TextButton(onPressed: () {Navigator.pop(context);}, child: const Text('Ok'))
             ],

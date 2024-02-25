@@ -265,20 +265,30 @@ typedef Cell = ({
   String teacher,
   String room,
   String group,
+  String detail,
   CellColor color,
 });
 
 typedef TimeTable = List<List<List<Cell>>>;
+
+String jsonNiceify(String input) {
+  try {
+    dynamic data = jsonDecode(input);
+    String res = const JsonEncoder.withIndent('  ').convert(data);
+    return res;
+  } on Exception { return input; }
+}
 
 TimeTable parseTimetable(Document html) => 
   html
   .querySelector(".bk-timetable-main")!
   .querySelectorAll(".bk-timetable-row")
   .map((e) => e.querySelectorAll(".bk-timetable-cell").map((d) => d.querySelectorAll(".day-item-hover").map((f) => (
-    room: f.querySelector(".right > div")?.innerHtml ?? "",
-    group: f.querySelector(".left > div")?.innerHtml ?? "",
-    subject: f.querySelector(".middle")?.innerHtml.trim() ?? "",
-    teacher: f.querySelector(".bottom > span")?.innerHtml.trim() ?? "",
+    room: f.querySelector(".right > div")?.innerHtml.replaceAll('<br>', '\n') ?? "",
+    group: f.querySelector(".left > div")?.innerHtml.replaceAll('<br>', '\n') ?? "",
+    subject: f.querySelector(".middle")?.innerHtml.trim().replaceAll('<br>', '\n') ?? "",
+    teacher: f.querySelector(".bottom > span")?.innerHtml.trim().replaceAll('<br>', '\n') ?? "",
+    detail: jsonNiceify(f.attributes["data-detail"]?.replaceAll('<br>', '\n') ?? ""),
     color: f.classes.contains("pink")
       ? CellColor.pink
       : f.classes.contains("green")
