@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:kleofas2/settings.dart';
 import 'events.dart';
 import 'package:intl/intl.dart';
 import 'storage.dart';
@@ -86,7 +87,8 @@ String formatczDate(DateTime date) {
 class DayWidget extends StatelessWidget {
   final DateTime date;
   final bool year;
-  const DayWidget(this.date, {this.year = false, super.key});
+  final EventType? eventType;
+  const DayWidget(this.date, {this.year = false, super.key, this.eventType});
 
   @override
   Widget build (BuildContext context) {
@@ -113,7 +115,8 @@ class DayWidget extends StatelessWidget {
 class DayPage extends StatefulWidget {
   final DateTime date;
   final String? teacherId;
-  const DayPage(this.date, {super.key, this.teacherId});
+  final EventType eventType;
+  const DayPage(this.date, {super.key, this.teacherId, this.eventType = EventType.my});
   @override
   State<DayPage> createState() => _DayPageSate();
 }
@@ -201,7 +204,11 @@ class _DayPageSate extends State<DayPage> {
 
   @override
   Widget build (BuildContext context) {
-    List events = List.from(storage.get(widget.teacherId == null ? 'events' : 'events:all')?['Events'] ?? []);
+    List events = List.from(storage.get(widget.teacherId == null ? (switch (widget.eventType) {
+          EventType.my => "events",
+          EventType.all => "events:all",
+          EventType.public => "events:public",
+        }) : 'events:all')?['Events'] ?? []);
     events.addAll(storage.get('tasks')?['Tasks'] ?? []);
     if (widget.teacherId != null) {
       events = events.where((element) => element.toString().contains(widget.teacherId!)).toList();

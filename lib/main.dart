@@ -11,11 +11,14 @@ void main() async {
   await initHive();
   if (!kIsWeb) {
     if (Platform.isAndroid || Platform.isIOS) {
-      await Workmanager().initialize(callbackDispatcher);
+      await Workmanager().initialize(
+        callbackDispatcher,
+        isInDebugMode: true,
+      );
       await Workmanager().registerPeriodicTask(
         'bgrefresh', 'backgroundRefreshing',
         frequency: Duration(minutes: int.tryParse(user.get("notifdur") ?? "15") ?? 15),
-        constraints: Constraints(networkType: NetworkType.connected),
+        // constraints: Constraints(networkType: NetworkType.connected),
       );
     }
   }

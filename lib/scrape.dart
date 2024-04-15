@@ -372,7 +372,7 @@ class _ParsePageState extends State<ParsePage> {
                             ),
                             ...List.generate(
                               timeTable!.map((e) => e.length).fold(0, max), (index2) => Column(
-                                children: timeTable![index][index2].map((e) => hourCell(e, (maxHeight - 95)/5/(timeTable![index][index2].length))).toList(),
+                                children: timeTable![index].asMap()[index2]?.map((e) => hourCell(e, (maxHeight - 95)/5/(timeTable![index][index2].length))).toList() ?? [const SizedBox()],
                               )
                             )
                           ],

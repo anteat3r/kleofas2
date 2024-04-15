@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:kleofas2/settings.dart';
 import 'package:kleofas2/storage.dart';
 import 'day.dart';
 import 'custom_icons.dart';
@@ -27,6 +28,7 @@ class _CalendarPageSate extends State<CalendarPage> {
   double cellHeight = 40;
   DateTime schoolYearStart = DateTime(DateTime.now().year - (DateTime.now().month < 9 ? 1 : 0), 9, 1);
   ScrollController _scrollController = ScrollController();
+  EventType eventType = EventType.my;
 
   @override
   void dispose() {
@@ -34,9 +36,19 @@ class _CalendarPageSate extends State<CalendarPage> {
     _scrollController.dispose();
   }
 
+  String describeEvent(EventType e) => switch (eventType) {
+    EventType.my => "My",
+    EventType.all => "All",
+    EventType.public => "Public",
+  };
+
   @override
   Widget build (BuildContext context) {
-    List<Map> events = List.from((storage.get('events')?['Events'] ?? []));
+    List<Map> events = List.from((storage.get(switch (eventType) {
+          EventType.my => "events",
+          EventType.all => "events:all",
+          EventType.public => "events:public",
+        })?['Events'] ?? []));
     List tasks = storage.get('tasks')?['Tasks'] ?? [];
     events.addAll(tasks.map((e) => Map.from(e)).toList());
     final mappedEvents = eventListToDateMap(events);
@@ -45,6 +57,14 @@ class _CalendarPageSate extends State<CalendarPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Kalendář'),
+        actions: [
+          DropdownButton(items: EventType.values.map((e) => DropdownMenuItem(
+          value: e,
+          child: Text(describeEvent(e)))).toList(), onChanged: (newvalue) {
+            if ( newvalue == null ) { return; }
+            setState(() { eventType = newvalue; });
+          }, value: eventType,)
+        ],
       ),
       body: loadScrollSnacksWrapper(context,
         controller: _scrollController,
@@ -94,7 +114,7 @@ class _CalendarPageSate extends State<CalendarPage> {
                       height: cellHeight,
                       child: ElevatedButton(
                         onPressed: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => DayPage(date)));
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => DayPage(date, eventType: eventType,)));
                         },
                         onLongPress: () async {
                           await showDialog(context: context, builder: (context) => TaskDialog(newTime: date,));
