@@ -404,7 +404,7 @@ void loadEndpointSnack (String endpoint, {String? url, Map<String, dynamic>? pay
 Future<Object?> completeReload () async {
   await Future.wait([
     loginUser(),
-    loginPb(),
+    // loginPb(),
   ]);
   await Future.wait([
     loadTimeTable(),
@@ -412,11 +412,11 @@ Future<Object?> completeReload () async {
     loadMarks(),
     loadEvents(),
   ]);
-  try {
-    await loadTasks();
-  } catch (e) {
-    return e;
-  }
+  // try {
+  //   await loadTasks();
+  // } catch (e) {
+  //   return e;
+  // }
   return null;
 }
 

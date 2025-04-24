@@ -27,7 +27,7 @@ Future<void> bgLoad () async {
   if (hour > 18 && (user.get('lastafternoonchunk') ?? '') != today) {
     afternoonNotifs = [
       ...unexcusedAbsences(oldStorage, newStorage),
-      ...tasksToDo(oldStorage, newStorage),
+      // ...tasksToDo(oldStorage, newStorage),
     ];
     await user.put('lastafternoonchunk', today);
   }

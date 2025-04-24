@@ -216,7 +216,29 @@ class _DayPageSate extends State<DayPage> {
     events = events.where((element) => isEventInvolved(element, widget.date),).toList();
     return Scaffold(
       appBar: AppBar(
-        title: Text('${czWeekDayNames[widget.date.weekday]} ${DateFormat('d. M. y').format(widget.date)}, ${formatczDate(widget.date)}')
+        title: Text('${czWeekDayNames[widget.date.weekday]} ${DateFormat('d. M. y').format(widget.date)}, ${formatczDate(widget.date)}'),
+        actions: [
+                IconButton(onPressed: () {
+                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) =>
+                    DayPage(
+                      widget.date.subtract(const Duration(days: 1)),
+                      teacherId: widget.teacherId,
+                      eventType: widget.eventType,
+                    )
+                  ));
+                  },
+                  icon: const Icon(Icons.swipe_left),
+                ),
+                IconButton(onPressed: () {
+                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) =>
+                    DayPage(
+                      widget.date.add(const Duration(days: 1)),
+                      teacherId: widget.teacherId,
+                      eventType: widget.eventType,
+                    )
+                  ));
+                }, icon: const Icon(Icons.swipe_right)),
+        ],
       ),
       body: loadScrollSnacksWrapper(context,
         child: Column(
@@ -424,7 +446,7 @@ class _DayPageSate extends State<DayPage> {
               },
               child: const Text("Přidat task"),
             ),
-          )
+          ),
           ],
         ),
       ),
